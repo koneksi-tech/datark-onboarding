@@ -30,13 +30,12 @@ spec:
                 name: {{ include "datark.backend.name" . }}-config
             - secretRef:
                 name: {{ include "datark.secretName" . }}
+          # Readiness only (gates Service traffic). No liveness probe — matches prod,
+          # avoids restart loops while the app boots / connects to deps.
           readinessProbe:
-            httpGet: { path: /health, port: http }
+            httpGet: { path: /check-health, port: http }
             initialDelaySeconds: 15
             periodSeconds: 10
-          livenessProbe:
-            httpGet: { path: /health, port: http }
-            initialDelaySeconds: 30
-            periodSeconds: 20
+            failureThreshold: 6
           resources:
             {{- toYaml .Values.backend.resources | nindent 12 }}

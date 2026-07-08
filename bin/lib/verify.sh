@@ -7,7 +7,11 @@ verify_tenant() {
   log "verifying tenant $id in $ns"
 
   # 1. all workloads rolled out
-  kc -n "$ns" rollout status "statefulset/${id}-kripfs" --timeout=300s
+  if [[ "${KRIPFS_ENABLED:-true}" == "true" ]]; then
+    kc -n "$ns" rollout status "statefulset/${id}-kripfs" --timeout=300s
+  else
+    warn "kripfs disabled — skipping kripfs checks"
+  fi
   kc -n "$ns" rollout status "statefulset/${id}-mongo" --timeout=300s
   kc -n "$ns" rollout status "statefulset/${id}-postgres" --timeout=300s
   kc -n "$ns" rollout status "deployment/${id}-backend" --timeout=300s
@@ -15,6 +19,7 @@ verify_tenant() {
   ok "all workloads rolled out"
 
   # 2. kripfs health on each pod
+  if [[ "${KRIPFS_ENABLED:-true}" != "true" ]]; then ok "tenant $id verified (kripfs skipped)"; return 0; fi
   local replicas i
   replicas="$(kc -n "$ns" get statefulset "${id}-kripfs" -o jsonpath='{.spec.replicas}')"
   for (( i=0; i<replicas; i++ )); do

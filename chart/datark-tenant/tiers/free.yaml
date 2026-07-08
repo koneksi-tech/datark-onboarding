@@ -1,0 +1,18 @@
+# Free tier — 1 kripfs node, minimal resources
+tier: "free"
+kripfs:
+  replicas: 1
+  replicationFactor: 1
+  storage: "2Gi"
+  resources:
+    requests: { cpu: "100m", memory: "256Mi" }
+    limits:   { cpu: "250m", memory: "512Mi" }
+mongo:
+  storage: "1Gi"
+postgres:
+  storage: "1Gi"
+# quota must fit the sum of all component LIMITS (backend+redis+mongo+postgres+kripfs)
+quota:
+  cpu: "3"
+  memory: "5Gi"
+  storage: "10Gi"

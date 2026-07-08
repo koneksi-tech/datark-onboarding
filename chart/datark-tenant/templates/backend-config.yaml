@@ -32,6 +32,7 @@ data:
   # --- public identity ---
   WEB_APP_URL: {{ printf "https://%s" (include "datark.host" .) | quote }}
   IP_ADDRESS_HEADER: "X-Forwarded-For"
+  POSTMARK_FROM: {{ .Values.backend.postmarkFrom | default "no-reply@koneksi.co.kr" | quote }}
   {{- range $k, $v := .Values.backend.extraConfig }}
   {{ $k }}: {{ $v | quote }}
   {{- end }}

@@ -29,8 +29,9 @@ spec:
               valueFrom: { secretKeyRef: { name: {{ include "datark.secretName" . }}, key: MONGO_PASSWORD } }
           readinessProbe:
             exec: { command: ["mongosh", "--quiet", "--eval", "db.adminCommand('ping')"] }
-            initialDelaySeconds: 10
-            periodSeconds: 10
+            initialDelaySeconds: 15
+            periodSeconds: 15
+            timeoutSeconds: 10   # mongosh needs >1s to start; default 1s times out
           resources:
             {{- toYaml .Values.mongo.resources | nindent 12 }}
           volumeMounts:

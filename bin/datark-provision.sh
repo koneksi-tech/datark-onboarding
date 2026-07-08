@@ -72,6 +72,11 @@ vault_provision_tenant "$TENANT"
 secret_sync "$TENANT"
 
 # 5) deploy the stack
+# KRIPFS_ENABLED=false lets you provision before the kripfs image is built.
+# HELM_WAIT=false returns immediately (no --wait/rollback) for observation.
+: "${KRIPFS_ENABLED:=true}"; export KRIPFS_ENABLED
+: "${HELM_WAIT:=true}"
+if [[ "$HELM_WAIT" == "true" ]]; then WAIT_ARGS=(--wait --timeout 10m); else WAIT_ARGS=(--wait=false); fi
 helmc upgrade --install "$REL" "$CHART_DIR" \
   -n "$NS" --create-namespace \
   -f "$TIERS_DIR/$TIER.yaml" \
@@ -79,10 +84,16 @@ helmc upgrade --install "$REL" "$CHART_DIR" \
   --set domain="$DOMAIN" \
   --set vault.addr="$VAULT_ADDR" \
   --set imagePullSecret="$IMAGE_PULL_SECRET" \
-  --wait --timeout 10m
+  --set kripfs.enabled="$KRIPFS_ENABLED" \
+  "${WAIT_ARGS[@]}"
 
 # 6) verify
-verify_tenant "$TENANT"
+if [[ "$HELM_WAIT" == "true" ]]; then
+  verify_tenant "$TENANT"
+else
+  warn "HELM_WAIT=false — skipping strict verify. Current pods:"
+  kc -n "$NS" get pods 2>/dev/null || true
+fi
 
 trap - ERR
 echo
