@@ -15,6 +15,7 @@ source "$DIR/lib/validate.sh"
 source "$DIR/lib/preflight.sh"
 source "$DIR/lib/vault.sh"
 source "$DIR/lib/secret-sync.sh"
+source "$DIR/lib/tls.sh"
 source "$DIR/lib/verify.sh"
 
 TENANT=""; TIER=""
@@ -60,14 +61,17 @@ kc label ns "$NS" datark.koneksi.co.kr/tenant="$TENANT" --overwrite >/dev/null
   --from-file=.dockerconfigjson="$REPO_DIR/.ncr-dockerconfig.json" \
   --dry-run=client -o yaml | kc apply -f - >/dev/null || warn "no .ncr-dockerconfig.json — assuming pull secret exists"
 
-# 2) Vault: per-tenant objects (generate-once)
+# 2) wildcard TLS secret into the tenant namespace (Ingress needs it namespaced)
+ensure_tls_secret "$TENANT"
+
+# 3) Vault: per-tenant objects (generate-once)
 vault_ensure_engines
 vault_provision_tenant "$TENANT"
 
-# 3) materialize the K8s Secret from Vault
+# 4) materialize the K8s Secret from Vault
 secret_sync "$TENANT"
 
-# 4) deploy the stack
+# 5) deploy the stack
 helmc upgrade --install "$REL" "$CHART_DIR" \
   -n "$NS" --create-namespace \
   -f "$TIERS_DIR/$TIER.yaml" \
@@ -77,7 +81,7 @@ helmc upgrade --install "$REL" "$CHART_DIR" \
   --set imagePullSecret="$IMAGE_PULL_SECRET" \
   --wait --timeout 10m
 
-# 5) verify
+# 6) verify
 verify_tenant "$TENANT"
 
 trap - ERR

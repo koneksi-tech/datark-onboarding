@@ -1,3 +1,4 @@
+{{- if .Values.kripfs.enabled }}
 # Headless service: stable per-pod DNS (kripfs-0.<hl>.<ns>.svc...) for peering.
 apiVersion: v1
 kind: Service
@@ -34,3 +35,4 @@ spec:
     - name: gateway
       port: {{ .Values.kripfs.gatewayPort }}
       targetPort: {{ .Values.kripfs.gatewayPort }}
+{{- end }}

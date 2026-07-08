@@ -24,6 +24,11 @@ fi
 : "${NS_PREFIX:=tenant-}"           # namespace = <NS_PREFIX><tenant-id>
 : "${IMAGE_PULL_SECRET:=ncr-regcred}"
 
+# TLS: wildcard cert materialized into each tenant namespace as a tls Secret.
+: "${TLS_CERT:=$REPO_DIR/certs/fullchain.pem}"
+: "${TLS_KEY:=$REPO_DIR/certs/private.key}"
+: "${TLS_SECRET_NAME:=datark-wildcard-tls}"   # must match chart ingress.tlsSecretName
+
 export VAULT_ADDR VAULT_TOKEN
 
 # --- logging ---

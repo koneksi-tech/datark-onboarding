@@ -1,0 +1,21 @@
+# Helm values for ingress-nginx on the datark-cluster (NHN NKS).
+# Shared ingress controller that fronts every tenant's <id>.datark.koneksi.co.kr.
+controller:
+  replicaCount: 2
+  ingressClassResource:
+    name: nginx
+    enabled: true
+    default: true          # make "nginx" the default IngressClass
+  ingressClass: nginx
+  service:
+    type: LoadBalancer     # NHN NKS provisions a cloud LB; wildcard DNS points here
+    externalTrafficPolicy: Local
+  config:
+    proxy-body-size: "0"           # large IPFS uploads
+    use-forwarded-headers: "true"
+    enable-real-ip: "true"
+  resources:
+    requests: { cpu: "100m", memory: "256Mi" }
+    limits:   { cpu: "500m", memory: "512Mi" }
+  admissionWebhooks:
+    enabled: true

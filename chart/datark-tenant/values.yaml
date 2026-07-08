@@ -24,14 +24,20 @@ secretName: ""                   # defaults to "<tenant.id>-secret" via _helpers
 imagePullSecret: "ncr-regcred"
 
 images:
-  kripfs:   "ncr.koneksi.co.kr/kipfs:REPLACE_ME"            # pin a real tag later
-  backend:  "ncr.koneksi.co.kr/koneksi-backend:REPLACE_ME"  # pin a real tag later
+  # kripfs: NO image exists yet — must be built+pushed from app-repo/kripfs/Dockerfile.
+  kripfs:   "REPLACE_ME/kipfs:v1.0.0"
+  # backend: reuse the existing NHN Container Registry image (koneksi-tech project).
+  # NOTE: this registry is in the PROD koneksi NHN account (36163004). The new-account
+  # cluster can only pull it if the repo is public/cross-account, else mirror it into
+  # this environment's own registry. Pull secret name below = imagePullSecret.
+  backend:  "36163004-kr1-registry.container.nhncloud.com/koneksi-tech/koneksi-backend:v0.0.2"
   redis:    "redis:7-alpine"
   mongo:    "mongo:7"
   postgres: "postgres:16-alpine"
 
 # ---- kripfs (StatefulSet) ----------------------------------------------------
 kripfs:
+  enabled: true                  # set false to skip kripfs (e.g. image not built yet)
   replicas: 1                    # tier-driven
   replicationFactor: 1           # tier-driven; MUST be <= replicas
   gatewayPort: 8080

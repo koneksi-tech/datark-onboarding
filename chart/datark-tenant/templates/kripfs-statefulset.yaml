@@ -1,3 +1,4 @@
+{{- if .Values.kripfs.enabled }}
 {{- if gt (int .Values.kripfs.replicationFactor) (int .Values.kripfs.replicas) -}}
 {{- fail (printf "replicationFactor (%d) must be <= kripfs.replicas (%d)" (int .Values.kripfs.replicationFactor) (int .Values.kripfs.replicas)) -}}
 {{- end -}}
@@ -61,7 +62,11 @@ spec:
       containers:
         - name: kripfs
           image: {{ .Values.images.kripfs | quote }}
-          args: ["--config", "/config/config.json", "daemon"]
+          # NOTE: the image's ENTRYPOINT is shell-form and hardcodes
+          # `kipfs --config /data/config.json daemon`, which would ignore args and
+          # auto-generate a single-node config. Override `command` so the daemon
+          # uses the cluster config our initContainer wrote to /config/config.json.
+          command: ["kipfs", "--config", "/config/config.json", "daemon"]
           ports:
             - { name: gateway, containerPort: {{ .Values.kripfs.gatewayPort }} }
             - { name: swarm,   containerPort: {{ .Values.kripfs.swarmPort }} }
@@ -95,3 +100,4 @@ spec:
         resources:
           requests:
             storage: {{ .Values.kripfs.storage | quote }}
+{{- end }}

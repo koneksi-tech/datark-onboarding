@@ -7,3 +7,9 @@
 
 # os
 .DS_Store
+
+# TLS certs — never commit
+certs/
+
+# kipfs binary is a BUILD artifact — never commit; built from app-repo/kripfs Dockerfile / CI
+ansible/files/kipfs

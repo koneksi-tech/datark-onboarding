@@ -42,7 +42,9 @@ secret_sync() {
       | sed -n 's/.*"data": {\(.*\)}.*/\1/p' >/dev/null 2>&1 || true
     # patch each shared key onto the secret
     for k in SPACES_KEY SPACES_SECRET SPACES_REGION SPACES_BUCKET SPACES_ENDPOINT \
-             PORTONE_SECRET_KEY PORTONE_WEBHOOK_SECRET POSTMARK_API_KEY PROVENANCE_SERVICE_TOKEN; do
+             PORTONE_SECRET_KEY PORTONE_WEBHOOK_SECRET \
+             PORTONE_INICIS_MONTHLY_CHANNEL_KEY PORTONE_INICIS_YEARLY_CHANNEL_KEY PORTONE_PAYPAL_CHANNEL_KEY \
+             POSTMARK_API_KEY PROVENANCE_SERVICE_TOKEN; do
       v="$(vault kv get -field="$k" "${VAULT_KV_MOUNT}/datark/shared" 2>/dev/null || true)"
       [[ -n "$v" ]] && kc patch secret "${id}-secret" -n "$ns" --type=merge \
         -p "{\"stringData\":{\"$k\":\"$v\"}}" >/dev/null 2>&1 || true
