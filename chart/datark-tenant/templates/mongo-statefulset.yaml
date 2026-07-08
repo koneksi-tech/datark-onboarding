@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "datark.mongo.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "datark.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "datark.mongo.name" . }}
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "datark.mongo.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "datark.mongo.name" . }}
+        {{- include "datark.labels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: mongo
+          image: {{ .Values.images.mongo | quote }}
+          ports:
+            - { name: mongo, containerPort: {{ .Values.mongo.port }} }
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              value: {{ .Values.mongo.rootUser | quote }}
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom: { secretKeyRef: { name: {{ include "datark.secretName" . }}, key: MONGO_PASSWORD } }
+          readinessProbe:
+            exec: { command: ["mongosh", "--quiet", "--eval", "db.adminCommand('ping')"] }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.mongo.resources | nindent 12 }}
+          volumeMounts:
+            - { name: data, mountPath: /data/db }
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        {{- include "datark.storageClass" . | nindent 8 }}
+        resources:
+          requests:
+            storage: {{ .Values.mongo.storage | quote }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "datark.mongo.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "datark.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: {{ include "datark.mongo.name" . }}
+  ports:
+    - name: mongo
+      port: {{ .Values.mongo.port }}
+      targetPort: {{ .Values.mongo.port }}

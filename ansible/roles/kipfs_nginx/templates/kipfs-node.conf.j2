@@ -1,0 +1,27 @@
+# Managed by Ansible — {{ tls_host }} (per-node HTTPS -> local kipfs :{{ kipfs_gateway_port }})
+server {
+    listen 80;
+    server_name {{ tls_host }};
+    return 301 https://$host$request_uri;
+}
+server {
+    listen 443 ssl;
+    server_name {{ tls_host }};
+
+    ssl_certificate     {{ tls_cert_dest }};
+    ssl_certificate_key {{ tls_key_dest }};
+
+    client_max_body_size 10G;
+
+    location / {
+        proxy_pass http://127.0.0.1:{{ kipfs_gateway_port }};
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_request_buffering off;
+        proxy_buffering off;
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+    }
+}

@@ -1,0 +1,17 @@
+# Pro tier — 3 kripfs nodes
+tier: "pro"
+kripfs:
+  replicas: 3
+  replicationFactor: 2
+  storage: "50Gi"
+  resources:
+    requests: { cpu: "500m", memory: "1Gi" }
+    limits:   { cpu: "1",    memory: "2Gi" }
+mongo:
+  storage: "20Gi"
+postgres:
+  storage: "20Gi"
+quota:
+  cpu: "12"
+  memory: "24Gi"
+  storage: "250Gi"

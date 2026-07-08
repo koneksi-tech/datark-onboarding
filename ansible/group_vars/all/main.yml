@@ -1,0 +1,18 @@
+# DatArk PoC — shared vars
+
+# KIPFS
+kipfs_gateway_port: 8080
+kipfs_swarm_port: 4001
+kipfs_api_port: 5001
+kipfs_replication_factor: 3
+kipfs_bin_src: files/kipfs                    # prebuilt binary shipped by Ansible
+kipfs_bin_dest: /home/{{ ansible_user }}/bin/kipfs
+kipfs_repo: /home/{{ ansible_user }}/.kipfs
+
+# TLS (wildcard *.koneksi.co.kr). Cert on the control machine — key must NOT be committed.
+tls_cert_src: "{{ playbook_dir }}/../../certs/fullchain.pem"
+tls_key_src:  "{{ playbook_dir }}/../../certs/private.key"
+tls_cert_dest: /etc/ssl/certs/koneksi.co.kr/fullchain.pem
+tls_key_dest:  /etc/ssl/private/koneksi.co.kr/private.key
+
+# secrets (kipfs_static_bearer, kipfs_cluster_secret) live in group_vars/vault.yml

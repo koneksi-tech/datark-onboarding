@@ -1,0 +1,8 @@
+apiVersion: v2
+name: datark-tenant
+description: One isolated DatArk tenant stack (kripfs + backend + redis + mongodb + postgres) in its own namespace.
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+maintainers:
+  - name: Koneksi / DatArk

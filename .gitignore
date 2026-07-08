@@ -1,0 +1,9 @@
+# secrets / local config — never commit
+.env
+.ncr-dockerconfig.json
+*.pem
+*.key
+*.tgz
+
+# os
+.DS_Store

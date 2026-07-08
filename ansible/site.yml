@@ -1,0 +1,32 @@
+---
+# DatArk PoC — full server setup/config via Ansible.
+# Usage:
+#   ansible-playbook site.yml                 # everything
+#   ansible-playbook site.yml --tags kipfs    # only the kipfs daemon/config
+#   ansible-playbook site.yml --tags nginx,lb # only the web tier
+#   ansible-playbook site.yml --limit datark-kipfs-2   # one host
+#   ansible-playbook site.yml --check         # dry-run
+
+# 1) KIPFS storage nodes: base + daemon + per-node HTTPS
+- name: KIPFS storage nodes
+  hosts: kipfs_nodes
+  become: true
+  roles:
+    - { role: common, tags: [common] }
+    - { role: kipfs_node, tags: [kipfs] }
+    - { role: kipfs_nginx, tags: [nginx] }
+
+# 2) Gateway / load balancer
+- name: Gateway (load balancer)
+  hosts: lb
+  become: true
+  roles:
+    - { role: common, tags: [common] }
+    - { role: kipfs_lb, tags: [lb, nginx] }
+
+# 3) Agent host — base only (DatArk Agent is Dev-owned; add its role when ready)
+- name: Agent host (base)
+  hosts: agent
+  become: true
+  roles:
+    - { role: common, tags: [common] }

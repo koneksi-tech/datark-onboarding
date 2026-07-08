@@ -1,0 +1,59 @@
+---
+# Install + configure the kipfs daemon as a clustered storage node.
+- name: Create bin dir
+  ansible.builtin.file:
+    path: "/home/{{ ansible_user }}/bin"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0755"
+
+- name: Ship the kipfs binary
+  ansible.builtin.copy:
+    src: "{{ kipfs_bin_src }}"
+    dest: "{{ kipfs_bin_dest }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0755"
+  notify: restart kipfs
+
+- name: Initialise the repo once (creates identity + dirs; never overwrites)
+  ansible.builtin.command: "{{ kipfs_bin_dest }} init"
+  args:
+    creates: "{{ kipfs_repo }}/keys/identity.key"
+  become: false
+  become_user: "{{ ansible_user }}"
+
+- name: Template config.json (cluster peers auto-derived from inventory)
+  ansible.builtin.template:
+    src: config.json.j2
+    dest: "{{ kipfs_repo }}/config.json"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0644"
+  notify: restart kipfs
+
+- name: Install kipfs systemd unit
+  ansible.builtin.template:
+    src: kipfs.service.j2
+    dest: /etc/systemd/system/kipfs.service
+    mode: "0644"
+  notify:
+    - reload systemd
+    - restart kipfs
+
+- name: Enable + start kipfs
+  ansible.builtin.systemd:
+    name: kipfs
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Wait for /health
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ kipfs_gateway_port }}/health"
+    status_code: 200
+  register: health
+  retries: 10
+  delay: 3
+  until: health.status == 200

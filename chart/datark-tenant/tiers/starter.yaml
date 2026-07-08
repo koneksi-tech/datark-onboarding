@@ -1,0 +1,17 @@
+# Starter tier — 1 kripfs node
+tier: "starter"
+kripfs:
+  replicas: 1
+  replicationFactor: 1
+  storage: "10Gi"
+  resources:
+    requests: { cpu: "250m", memory: "512Mi" }
+    limits:   { cpu: "500m", memory: "1Gi" }
+mongo:
+  storage: "5Gi"
+postgres:
+  storage: "5Gi"
+quota:
+  cpu: "4"
+  memory: "8Gi"
+  storage: "50Gi"

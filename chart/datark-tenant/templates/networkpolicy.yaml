@@ -1,0 +1,24 @@
+{{- if .Values.networkPolicy.enabled }}
+# Default-deny all ingress, then allow only same-namespace + ingress-controller.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "datark.id" . }}-default-deny
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "datark.labels" . | nindent 4 }}
+spec:
+  podSelector: {}
+  policyTypes: ["Ingress"]
+  ingress:
+    # traffic from pods in this same namespace
+    - from:
+        - podSelector: {}
+    # the ingress-nginx controller reaching the backend (adjust label to your install)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - { protocol: TCP, port: {{ .Values.backend.port }} }
+{{- end }}

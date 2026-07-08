@@ -1,0 +1,97 @@
+{{- if gt (int .Values.kripfs.replicationFactor) (int .Values.kripfs.replicas) -}}
+{{- fail (printf "replicationFactor (%d) must be <= kripfs.replicas (%d)" (int .Values.kripfs.replicationFactor) (int .Values.kripfs.replicas)) -}}
+{{- end -}}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "datark.kripfs.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "datark.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "datark.kripfs.hl" . }}
+  replicas: {{ .Values.kripfs.replicas }}
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels:
+      app: {{ include "datark.kripfs.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "datark.kripfs.name" . }}
+        {{- include "datark.labels" . | nindent 8 }}
+    spec:
+      {{- if .Values.imagePullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecret }}
+      {{- end }}
+      initContainers:
+        - name: gen-config
+          image: {{ .Values.images.kripfs | quote }}
+          command: ["/bin/sh", "/gen/gen-config.sh"]
+          env:
+            - name: REPLICAS
+              value: {{ .Values.kripfs.replicas | quote }}
+            - name: REPLICATION_FACTOR
+              value: {{ .Values.kripfs.replicationFactor | quote }}
+            - name: STS_NAME
+              value: {{ include "datark.kripfs.name" . | quote }}
+            - name: HL_SVC
+              value: {{ include "datark.kripfs.hl" . | quote }}
+            - name: NAMESPACE
+              value: {{ .Release.Namespace | quote }}
+            - name: GATEWAY_PORT
+              value: {{ .Values.kripfs.gatewayPort | quote }}
+            - name: SWARM_PORT
+              value: {{ .Values.kripfs.swarmPort | quote }}
+            - name: API_PORT
+              value: {{ .Values.kripfs.apiPort | quote }}
+            - name: REPO_ROOT
+              value: {{ .Values.kripfs.repoRoot | quote }}
+            - name: LOG_LEVEL
+              value: {{ .Values.kripfs.logLevel | quote }}
+            - name: KIPFS_CLUSTER_SECRET
+              valueFrom: { secretKeyRef: { name: {{ include "datark.secretName" . }}, key: KIPFS_CLUSTER_SECRET } }
+            - name: KIPFS_STATIC_BEARER
+              valueFrom: { secretKeyRef: { name: {{ include "datark.secretName" . }}, key: KIPFS_STATIC_BEARER } }
+          volumeMounts:
+            - { name: gen, mountPath: /gen }
+            - { name: config, mountPath: /config }
+            - { name: data, mountPath: {{ .Values.kripfs.repoRoot | quote }} }
+      containers:
+        - name: kripfs
+          image: {{ .Values.images.kripfs | quote }}
+          args: ["--config", "/config/config.json", "daemon"]
+          ports:
+            - { name: gateway, containerPort: {{ .Values.kripfs.gatewayPort }} }
+            - { name: swarm,   containerPort: {{ .Values.kripfs.swarmPort }} }
+            - { name: api,     containerPort: {{ .Values.kripfs.apiPort }} }
+          readinessProbe:
+            httpGet: { path: /health, port: gateway }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /health, port: gateway }
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.kripfs.resources | nindent 12 }}
+          volumeMounts:
+            - { name: config, mountPath: /config }
+            - { name: data, mountPath: {{ .Values.kripfs.repoRoot | quote }} }
+      volumes:
+        - name: gen
+          configMap:
+            name: {{ include "datark.kripfs.name" . }}-gen
+            defaultMode: 0755
+        - name: config
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        {{- include "datark.storageClass" . | nindent 8 }}
+        resources:
+          requests:
+            storage: {{ .Values.kripfs.storage | quote }}

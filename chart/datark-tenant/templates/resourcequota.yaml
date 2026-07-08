@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: {{ include "datark.id" . }}-quota
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "datark.labels" . | nindent 4 }}
+spec:
+  hard:
+    requests.cpu: {{ .Values.quota.cpu | quote }}
+    requests.memory: {{ .Values.quota.memory | quote }}
+    limits.cpu: {{ .Values.quota.cpu | quote }}
+    limits.memory: {{ .Values.quota.memory | quote }}
+    requests.storage: {{ .Values.quota.storage | quote }}

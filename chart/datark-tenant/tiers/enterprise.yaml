@@ -1,0 +1,17 @@
+# Enterprise tier — 5 kripfs nodes
+tier: "enterprise"
+kripfs:
+  replicas: 5
+  replicationFactor: 3
+  storage: "200Gi"
+  resources:
+    requests: { cpu: "1",  memory: "2Gi" }
+    limits:   { cpu: "2",  memory: "4Gi" }
+mongo:
+  storage: "100Gi"
+postgres:
+  storage: "50Gi"
+quota:
+  cpu: "24"
+  memory: "48Gi"
+  storage: "1200Gi"

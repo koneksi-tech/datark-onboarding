@@ -1,0 +1,36 @@
+# Headless service: stable per-pod DNS (kripfs-0.<hl>.<ns>.svc...) for peering.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "datark.kripfs.hl" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "datark.labels" . | nindent 4 }}
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  selector:
+    app: {{ include "datark.kripfs.name" . }}
+  ports:
+    - name: gateway
+      port: {{ .Values.kripfs.gatewayPort }}
+    - name: swarm
+      port: {{ .Values.kripfs.swarmPort }}
+    - name: api
+      port: {{ .Values.kripfs.apiPort }}
+---
+# Stable ClusterIP the backend talks to (load-balanced across pods).
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "datark.kripfs.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "datark.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: {{ include "datark.kripfs.name" . }}
+  ports:
+    - name: gateway
+      port: {{ .Values.kripfs.gatewayPort }}
+      targetPort: {{ .Values.kripfs.gatewayPort }}

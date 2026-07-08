@@ -1,0 +1,14 @@
+[Unit]
+Description=kipfs daemon (DatArk KIPFS storage node — {{ node_name }})
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User={{ ansible_user }}
+ExecStart={{ kipfs_bin_dest }} --config {{ kipfs_repo }}/config.json daemon
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

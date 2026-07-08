@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "datark.backend.name" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "datark.labels" . | nindent 4 }}
+data:
+  NODE_ENV: {{ .Values.backend.nodeEnv | quote }}
+  MODE: {{ .Values.backend.mode | quote }}
+  PORT: {{ .Values.backend.port | quote }}
+  # --- in-namespace datastores ---
+  REDIS_HOST: {{ include "datark.redis.svc" . | quote }}
+  REDIS_PORT: {{ .Values.redis.port | quote }}
+  REDIS_PREFIX: {{ .Values.redis.prefix | quote }}
+  MONGO_DATABASE: {{ .Values.backend.mongoDatabase | quote }}
+  POSTGRES_HOST: {{ include "datark.postgres.svc" . | quote }}
+  POSTGRES_PORT: {{ .Values.postgres.port | quote }}
+  POSTGRES_USER: {{ .Values.backend.postgresUser | quote }}
+  POSTGRES_DB: {{ .Values.backend.postgresDb | quote }}
+  POSTGRES_SSL_MODE: "disable"
+  # --- kripfs (this tenant, internal) ---
+  IPFS_NODE_URL: {{ printf "http://%s:%d" (include "datark.kripfs.svc" .) (int .Values.kripfs.gatewayPort) | quote }}
+  IPFS_DOWNLOAD_URL: {{ printf "http://%s:%d" (include "datark.kripfs.svc" .) (int .Values.kripfs.gatewayPort) | quote }}
+  # --- this environment's Vault (NOT prod koneksi vault) ---
+  VAULT_ADDR: {{ required "vault.addr is required (feed ${VAULT_ADDR})" .Values.vault.addr | quote }}
+  VAULT_NAMESPACE: ""
+  VAULT_TRANSIT_MOUNT: {{ .Values.vault.transitMount | quote }}
+  VAULT_TRANSIT_KEY: {{ include "datark.transitKey" . | quote }}
+  VAULT_TLS_SKIP_VERIFY: {{ .Values.vault.tlsSkipVerify | quote }}
+  VAULT_DEK_CACHE_TTL_SECONDS: {{ .Values.vault.dekCacheTtlSeconds | quote }}
+  # --- public identity ---
+  WEB_APP_URL: {{ printf "https://%s" (include "datark.host" .) | quote }}
+  IP_ADDRESS_HEADER: "X-Forwarded-For"
+  {{- range $k, $v := .Values.backend.extraConfig }}
+  {{ $k }}: {{ $v | quote }}
+  {{- end }}

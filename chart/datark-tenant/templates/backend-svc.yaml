@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "datark.backend.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "datark.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: {{ include "datark.backend.name" . }}
+  ports:
+    - name: http
+      port: 80
+      targetPort: {{ .Values.backend.port }}

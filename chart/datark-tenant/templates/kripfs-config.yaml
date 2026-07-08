@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "datark.kripfs.name" . }}-gen
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "datark.labels" . | nindent 4 }}
+data:
+  # Runs in an initContainer. Builds /config/config.json for THIS pod:
+  # cluster_peers = every other ordinal's gateway URL (self excluded);
+  # secrets injected from env (sourced from the Vault-materialized Secret).
+  gen-config.sh: |
+    #!/bin/sh
+    set -eu
+    ORD="${HOSTNAME##*-}"
+    PEERS=""
+    i=0
+    while [ "$i" -lt "$REPLICAS" ]; do
+      if [ "$i" != "$ORD" ]; then
+        [ -n "$PEERS" ] && PEERS="${PEERS},"
+        PEERS="${PEERS}\"http://${STS_NAME}-${i}.${HL_SVC}.${NAMESPACE}.svc.cluster.local:${GATEWAY_PORT}\""
+      fi
+      i=$((i + 1))
+    done
+    mkdir -p "${REPO_ROOT}/state" "${REPO_ROOT}/keys" "${REPO_ROOT}/audit"
+    cat > /config/config.json <<EOF
+    {
+      "gateway_port": ${GATEWAY_PORT},
+      "swarm_port": ${SWARM_PORT},
+      "api_port": ${API_PORT},
+      "listen_addr": null,
+      "announce_addr": null,
+      "repo_root": "${REPO_ROOT}",
+      "cluster_mode": "cluster",
+      "cluster_peers": [ ${PEERS} ],
+      "cluster_secret": "${KIPFS_CLUSTER_SECRET}",
+      "replication_factor": ${REPLICATION_FACTOR},
+      "cluster_state_path": "${REPO_ROOT}/state/cluster.json",
+      "cluster_audit_path": "${REPO_ROOT}/audit/cluster-audit.log",
+      "identity_key_path": "${REPO_ROOT}/keys/identity.key",
+      "pin_journal_path": "${REPO_ROOT}/state/pins.journal",
+      "node_name": "${HOSTNAME}",
+      "koneksi_auth_enabled": true,
+      "koneksi_static_bearer": "${KIPFS_STATIC_BEARER}",
+      "log_level": "${LOG_LEVEL}",
+      "log_format": "text",
+      "dht_mode": "auto",
+      "noise_enabled": true
+    }
+    EOF
+    echo "generated /config/config.json for ${HOSTNAME} (peers: ${PEERS:-none})"

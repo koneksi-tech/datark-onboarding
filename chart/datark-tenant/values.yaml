@@ -1,0 +1,102 @@
+# =============================================================================
+# datark-tenant — default values
+# Per-tenant overrides come from tiers/<tier>.yaml + --set tenant.id=<id>.
+# Secrets are NOT here — they are materialized into a K8s Secret from Vault by
+# bin/lib/secret-sync.sh BEFORE `helm upgrade`. This chart only references it.
+# =============================================================================
+
+tenant:
+  id: ""                         # REQUIRED. e.g. "abc" -> subdomain abc.<domain>
+tier: "custom"                   # set by the tier values file (starter|pro|enterprise)
+
+# Public DNS. Tenant URL = <tenant.id>.<domain>. Wildcard *.<domain> must point
+# at the shared ingress-nginx, with a wildcard TLS secret available.
+domain: "datark.koneksi.co.kr"
+ingress:
+  className: "nginx"
+  tlsSecretName: "datark-wildcard-tls"   # wildcard cert secret (shared, pre-created)
+
+# Name of the Secret materialized from Vault (created by secret-sync.sh).
+# Every workload reads its credentials from here.
+secretName: ""                   # defaults to "<tenant.id>-secret" via _helpers
+
+# NCR image pull secret (created in the tenant namespace by the script).
+imagePullSecret: "ncr-regcred"
+
+images:
+  kripfs:   "ncr.koneksi.co.kr/kipfs:REPLACE_ME"            # pin a real tag later
+  backend:  "ncr.koneksi.co.kr/koneksi-backend:REPLACE_ME"  # pin a real tag later
+  redis:    "redis:7-alpine"
+  mongo:    "mongo:7"
+  postgres: "postgres:16-alpine"
+
+# ---- kripfs (StatefulSet) ----------------------------------------------------
+kripfs:
+  replicas: 1                    # tier-driven
+  replicationFactor: 1           # tier-driven; MUST be <= replicas
+  gatewayPort: 8080
+  swarmPort: 4001
+  apiPort: 5001
+  storage: "10Gi"                # per-pod PVC (blocks + identity + state)
+  repoRoot: "/data"
+  logLevel: "info"
+  resources:
+    requests: { cpu: "250m", memory: "512Mi" }
+    limits:   { cpu: "500m", memory: "1Gi" }
+
+# ---- backend (Deployment) ----------------------------------------------------
+backend:
+  replicas: 1
+  port: 3000
+  nodeEnv: "production"
+  mode: "release"
+  mongoDatabase: "koneksi"
+  postgresDb: "koneksi"
+  postgresUser: "postgres"
+  resources:
+    requests: { cpu: "250m", memory: "512Mi" }
+    limits:   { cpu: "1",    memory: "1Gi" }
+  # Non-secret app config passed straight into the backend ConfigMap.
+  extraConfig: {}
+
+# ---- redis (Deployment) ------------------------------------------------------
+redis:
+  port: 6379
+  prefix: "KONEKSI"
+  resources:
+    requests: { cpu: "100m", memory: "128Mi" }
+    limits:   { cpu: "250m", memory: "256Mi" }
+
+# ---- mongodb (StatefulSet) ---------------------------------------------------
+mongo:
+  port: 27017
+  rootUser: "root"
+  storage: "5Gi"
+  resources:
+    requests: { cpu: "250m", memory: "512Mi" }
+    limits:   { cpu: "500m", memory: "1Gi" }
+
+# ---- postgres (StatefulSet) --------------------------------------------------
+postgres:
+  port: 5432
+  storage: "5Gi"
+  resources:
+    requests: { cpu: "250m", memory: "256Mi" }
+    limits:   { cpu: "500m", memory: "512Mi" }
+
+# ---- Vault (this environment's dedicated cluster; NOT prod koneksi vault) -----
+vault:
+  addr: ""                       # ${VAULT_ADDR} — fed at provision time
+  transitMount: "transit"
+  transitKey: ""                 # defaults to "datark-<tenant.id>"
+  tlsSkipVerify: "false"
+  dekCacheTtlSeconds: "300"
+
+# ---- storage / isolation -----------------------------------------------------
+storageClassName: ""             # "" = cluster default StorageClass
+quota:
+  cpu: "4"
+  memory: "8Gi"
+  storage: "100Gi"
+networkPolicy:
+  enabled: true

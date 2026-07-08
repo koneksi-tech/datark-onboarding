@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "datark.backend.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "datark.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.backend.replicas }}
+  selector:
+    matchLabels:
+      app: {{ include "datark.backend.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "datark.backend.name" . }}
+        {{- include "datark.labels" . | nindent 8 }}
+    spec:
+      {{- if .Values.imagePullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecret }}
+      {{- end }}
+      containers:
+        - name: backend
+          image: {{ .Values.images.backend | quote }}
+          ports:
+            - { name: http, containerPort: {{ .Values.backend.port }} }
+          envFrom:
+            - configMapRef:
+                name: {{ include "datark.backend.name" . }}-config
+            - secretRef:
+                name: {{ include "datark.secretName" . }}
+          readinessProbe:
+            httpGet: { path: /health, port: http }
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /health, port: http }
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
