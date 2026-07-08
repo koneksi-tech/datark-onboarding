@@ -33,7 +33,8 @@ images:
   backend:  "36163004-kr1-registry.container.nhncloud.com/koneksi-tech/koneksi-backend:v0.0.2"
   redis:    "redis:7-alpine"
   mongo:    "mongo:7"
-  postgres: "postgres:16-alpine"
+  # TimescaleDB-enabled Postgres — the backend does CREATE EXTENSION timescaledb.
+  postgres: "timescale/timescaledb:2.17.2-pg16"
 
 # ---- kripfs (StatefulSet) ----------------------------------------------------
 kripfs:

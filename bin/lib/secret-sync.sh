@@ -35,21 +35,17 @@ secret_sync() {
     --from-literal=VAULT_SECRET_ID="$sid" \
     --dry-run=client -o yaml | kc apply -f - >/dev/null
 
-  # Merge shared platform secrets if present (spaces/portone/postmark/provenance).
+  # Merge ALL shared platform secrets (spaces/portone/postmark/provenance) if present.
+  # Dynamic: syncs whatever keys exist under secret/datark/shared — no hardcoded list.
   if vault kv get "${VAULT_KV_MOUNT}/datark/shared" >/dev/null 2>&1; then
-    local tmp; tmp="$(mktemp)"
-    vault kv get -format=json "${VAULT_KV_MOUNT}/datark/shared" \
-      | sed -n 's/.*"data": {\(.*\)}.*/\1/p' >/dev/null 2>&1 || true
-    # patch each shared key onto the secret
-    for k in SPACES_KEY SPACES_SECRET SPACES_REGION SPACES_BUCKET SPACES_ENDPOINT \
-             PORTONE_SECRET_KEY PORTONE_WEBHOOK_SECRET \
-             PORTONE_INICIS_MONTHLY_CHANNEL_KEY PORTONE_INICIS_YEARLY_CHANNEL_KEY PORTONE_PAYPAL_CHANNEL_KEY \
-             POSTMARK_API_KEY PROVENANCE_SERVICE_TOKEN; do
-      v="$(vault kv get -field="$k" "${VAULT_KV_MOUNT}/datark/shared" 2>/dev/null || true)"
-      [[ -n "$v" ]] && kc patch secret "${id}-secret" -n "$ns" --type=merge \
-        -p "{\"stringData\":{\"$k\":\"$v\"}}" >/dev/null 2>&1 || true
+    local shared_json k v n=0
+    shared_json="$(vault kv get -format=json "${VAULT_KV_MOUNT}/datark/shared")"
+    for k in $(echo "$shared_json" | jq -r '.data.data | keys[]'); do
+      v="$(echo "$shared_json" | jq -r --arg k "$k" '.data.data[$k]')"
+      [[ -n "$v" && "$v" != "null" ]] && kc patch secret "${id}-secret" -n "$ns" --type=merge \
+        -p "$(jq -n --arg k "$k" --arg v "$v" '{stringData:{($k):$v}}')" >/dev/null 2>&1 && n=$((n+1)) || true
     done
-    rm -f "$tmp"
+    ok "shared platform secrets merged ($n keys) into ${id}-secret"
   fi
   ok "k8s secret ${id}-secret synced from vault into $ns"
 }

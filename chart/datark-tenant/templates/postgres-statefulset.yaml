@@ -20,6 +20,8 @@ spec:
       containers:
         - name: postgres
           image: {{ .Values.images.postgres | quote }}
+          # force-load timescaledb so the backend can CREATE EXTENSION timescaledb
+          args: ["postgres", "-c", "shared_preload_libraries=timescaledb"]
           ports:
             - { name: postgres, containerPort: {{ .Values.postgres.port }} }
           env:

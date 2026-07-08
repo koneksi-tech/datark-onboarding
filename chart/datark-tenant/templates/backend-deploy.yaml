@@ -7,6 +7,12 @@ metadata:
     {{- include "datark.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.backend.replicas }}
+  # maxSurge 0: replace in place (no transient 2x pod) so rollouts fit the ResourceQuota.
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
   selector:
     matchLabels:
       app: {{ include "datark.backend.name" . }}
