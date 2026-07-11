@@ -1,0 +1,101 @@
+# Manually provision a DatArk tenant on the datark-cluster.
+#
+# Trigger: Actions tab → "Provision DatArk tenant" → Run workflow.
+#   - client name  → becomes the tenant id + namespace (tenant-<client>)
+#   - tier         → tier1 / tier2 / tier3  (mapped to starter / pro / enterprise)
+#
+# Required repo secrets:
+#   KUBE_CONFIG        - datark-cluster kubeconfig
+#   VAULT_ADDR         - this env's Vault address
+#   VAULT_TOKEN        - Vault provisioner token
+#   NCR_DOCKERCONFIG   - .dockerconfigjson for NHN NCR (image pull)
+#   TLS_FULLCHAIN      - *.koneksi.co.kr fullchain PEM
+#   TLS_KEY            - *.koneksi.co.kr private key PEM
+name: Provision DatArk tenant
+
+on:
+  workflow_dispatch:
+    inputs:
+      client_name:
+        description: "Client name — becomes tenant id + namespace (tenant-<name>). lowercase a-z 0-9 -"
+        required: true
+        type: string
+      tier:
+        description: "Subscription tier"
+        required: true
+        type: choice
+        default: tier1
+        options:
+          - tier1        # starter
+          - tier2        # pro
+          - tier3        # enterprise
+
+permissions:
+  contents: read
+
+jobs:
+  provision:
+    name: "Provision ${{ inputs.client_name }} (${{ inputs.tier }})"
+    runs-on: ubuntu-22.04
+    env:
+      VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+      VAULT_TOKEN: ${{ secrets.VAULT_TOKEN }}
+      DOMAIN: koneksi.co.kr
+      KRIPFS_ENABLED: "true"
+      HELM_WAIT: "false"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Map tier1/2/3 → tier name
+        id: tier
+        run: |
+          case "${{ inputs.tier }}" in
+            tier1) echo "name=starter"    >> "$GITHUB_OUTPUT" ;;
+            tier2) echo "name=pro"        >> "$GITHUB_OUTPUT" ;;
+            tier3) echo "name=enterprise" >> "$GITHUB_OUTPUT" ;;
+            *) echo "unknown tier"; exit 1 ;;
+          esac
+
+      - name: Install kubectl, helm, vault
+        run: |
+          curl -sLO "https://dl.k8s.io/release/$(curl -sL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          sudo install kubectl /usr/local/bin/kubectl
+          curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+          wget -qO- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp.gpg
+          echo "deb [signed-by=/usr/share/keyrings/hashicorp.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list >/dev/null
+          sudo apt-get update -qq && sudo apt-get install -y -qq vault
+
+      - name: Write kubeconfig
+        env:
+          KC: ${{ secrets.KUBE_CONFIG }}
+        run: |
+          mkdir -p "$HOME/.kube"
+          printf '%s' "$KC" > "$HOME/.kube/config"
+          chmod 600 "$HOME/.kube/config"
+          echo "KUBECONFIG=$HOME/.kube/config" >> "$GITHUB_ENV"
+
+      - name: Write NCR pull secret + TLS certs
+        env:
+          NCR: ${{ secrets.NCR_DOCKERCONFIG }}
+          FULLCHAIN: ${{ secrets.TLS_FULLCHAIN }}
+          KEY: ${{ secrets.TLS_KEY }}
+        run: |
+          printf '%s' "$NCR" > .ncr-dockerconfig.json
+          mkdir -p certs
+          printf '%s' "$FULLCHAIN" > certs/fullchain.pem
+          printf '%s' "$KEY"       > certs/private.key
+          chmod 600 certs/private.key
+
+      - name: Provision tenant
+        run: |
+          chmod +x bin/*.sh bin/lib/*.sh
+          ./bin/datark-provision.sh --tenant "${{ inputs.client_name }}" --tier "${{ steps.tier.outputs.name }}"
+
+      - name: Output
+        run: |
+          echo "### DatArk tenant provisioned :rocket:" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Client / namespace:** \`tenant-${{ inputs.client_name }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Tier:** ${{ inputs.tier }} (${{ steps.tier.outputs.name }})" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **URL:** https://${{ inputs.client_name }}.koneksi.co.kr" >> "$GITHUB_STEP_SUMMARY"

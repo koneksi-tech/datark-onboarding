@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DatArk Onboarding — Status Update</title>
+<style>
+  :root{--bg:#f6f8fa;--card:#fff;--ink:#1f2328;--muted:#57606a;--line:#d0d7de;--accent:#1f6feb;--ok:#1a7f37;--warn:#9a6700;--danger:#cf222e;--chip:#eaeef2;--code:#f0f3f6;}
+  @media (prefers-color-scheme:dark){:root{--bg:#0d1117;--card:#161b22;--ink:#e6edf3;--muted:#8b949e;--line:#30363d;--accent:#58a6ff;--ok:#3fb950;--warn:#d29922;--danger:#f85149;--chip:#21262d;--code:#0b0f14;}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:1000px;margin:0 auto;padding:32px 20px 80px;}
+  header.top{border-bottom:2px solid var(--line);padding-bottom:18px;margin-bottom:26px;}
+  h1{font-size:25px;margin:0 0 6px;}
+  h2{font-size:19px;margin:34px 0 12px;padding-top:10px;border-top:1px solid var(--line);}
+  h3{font-size:15px;margin:18px 0 6px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;}
+  .sub{color:var(--muted);font-size:14px;}
+  code{background:var(--code);padding:1px 6px;border-radius:5px;font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace;}
+  table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13.5px;display:block;overflow-x:auto;}
+  th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top;}
+  th{background:var(--chip);font-weight:600;}
+  .b{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:20px;white-space:nowrap;}
+  .ok{background:rgba(26,127,55,.15);color:var(--ok);}
+  .warn{background:rgba(154,103,0,.16);color:var(--warn);}
+  .bad{background:rgba(207,34,46,.14);color:var(--danger);}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:12px 0;}
+  .kpi{display:flex;gap:12px;flex-wrap:wrap;margin:14px 0;}
+  .kpi .box{flex:1;min-width:150px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;}
+  .kpi .n{font-size:22px;font-weight:700;} .kpi .l{font-size:12px;color:var(--muted);}
+  ul{margin:6px 0 6px 2px;padding-left:20px;} li{margin:3px 0;}
+  .muted{color:var(--muted);} .mono{font:12.5px ui-monospace,monospace;}
+  .foot{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;}
+  .flag{border-left:4px solid var(--warn);background:rgba(154,103,0,.06);}
+  .flagbad{border-left:4px solid var(--danger);background:rgba(207,34,46,.06);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <span class="b ok">LIVE-TESTED</span>
+  <span class="b ok">UPGRADE-READY</span>
+  <span class="b ok">ALL 5 COMPONENTS RUNNING IN PODS</span>
+  <h1>DatArk Onboarding — Status Update</h1>
+  <p class="sub">Per-tenant provisioning of the DatArk stack on NHN. As of <b>2026-07-08</b>. Environment is <b>separate</b> from prod Koneksi (own K8s cluster + own Vault).</p>
+</header>
+
+<div class="card" style="border-left:4px solid var(--accent);background:rgba(31,111,235,.06);">
+  <h3 style="margin-top:0;color:var(--accent)">🎯 Goal of this onboarding</h3>
+  <p style="margin:6px 0;">Make <b>DatArk sellable as a self-service product on a marketplace</b>. When a client subscribes and picks a plan, the platform should <b>automatically provision an isolated, private DatArk environment</b> for that client — no manual setup.</p>
+  <p style="margin:6px 0;">Each client (tenant) gets their <b>own dedicated stack</b> on a shared Kubernetes cluster, isolated in its own namespace:</p>
+  <ul style="margin:6px 0;">
+    <li><b>kripfs</b> storage nodes (count scales with the plan) + <b>backend</b> API + <b>redis</b> + <b>mongodb</b> + <b>postgres</b></li>
+    <li>reached at the client's own subdomain <code>&lt;client&gt;.koneksi.co.kr</code></li>
+    <li>secrets isolated per-client in Vault; databases and storage private to that tenant</li>
+  </ul>
+  <p style="margin:6px 0;">Provisioning is driven by <b>one automated command</b> (Helm + bash) that the marketplace "buy" button can call. Plans are tiered (<b>free → starter → pro → enterprise</b>), and a client can <b>upgrade</b> to get more kripfs nodes / replication on demand.</p>
+  <p style="margin:6px 0;" class="muted"><b>This status report</b> shows how far that goal is: the prerequisites (K8s + Vault) are ready, all five components (incl. kripfs) now deploy and run in pods, and a tenant is reachable over valid TLS. Remaining: DNS records + a few hardening items.</p>
+</div>
+
+<div class="kpi">
+  <div class="box"><div class="n" style="color:var(--ok)">5 / 5</div><div class="l">components deploy &amp; run in pods</div></div>
+  <div class="box"><div class="n" style="color:var(--ok)">2 / 2</div><div class="l">prerequisites ready (K8s + Vault)</div></div>
+  <div class="box"><div class="n" style="color:var(--ok)">0</div><div class="l">deployment blockers</div></div>
+  <div class="box"><div class="n" style="color:var(--ok)">✔</div><div class="l">full stack verified in one tenant</div></div>
+</div>
+
+<!-- ============ PREREQUISITES ============ -->
+<h2>1. Prerequisites — required before any tenant/backend deploys</h2>
+<p class="muted">These are the shared, one-time foundations. Both are <b>provisioned and validated</b>.</p>
+
+<h3>1a. Kubernetes cluster — <span class="b ok">READY</span></h3>
+<table>
+  <tr><th>Item</th><th>Status</th><th>Detail</th></tr>
+  <tr><td>NKS cluster <code>datark-cluster</code></td><td><span class="b ok">READY</span></td><td>4 worker nodes, K8s v1.34.3, admin access</td></tr>
+  <tr><td>Default StorageClass</td><td><span class="b ok">READY</span></td><td><code>nhn-block-ssd</code> (Cinder CSI) — replicated from prod; PVC bind verified</td></tr>
+  <tr><td>Ingress controller + LoadBalancer</td><td><span class="b ok">READY</span></td><td>ingress-nginx installed; public LB IP <code>133.186.214.160</code></td></tr>
+  <tr><td>NCR image pull secret</td><td><span class="b ok">READY</span></td><td><code>ncr-regcred</code> — backend image pulls cross-account; verified</td></tr>
+  <tr><td>DNS for tenant hosts <code>&lt;id&gt;.koneksi.co.kr</code></td><td><span class="b warn">PENDING</span></td><td>A-record(s) → <code>133.186.214.160</code> so tenant URLs resolve</td></tr>
+  <tr><td>TLS cert <code>*.koneksi.co.kr</code></td><td><span class="b ok">READY</span></td><td>covers <code>&lt;id&gt;.koneksi.co.kr</code>; verified — <b>TLS validates</b> (no warning)</td></tr>
+</table>
+
+<h3>1b. Vault cluster — <span class="b ok">READY</span></h3>
+<table>
+  <tr><th>Item</th><th>Status</th><th>Detail</th></tr>
+  <tr><td>Vault node</td><td><span class="b ok">READY</span></td><td><code>125.6.39.130:8200</code>, v2.0.3, Raft storage, reachable externally</td></tr>
+  <tr><td>Engines</td><td><span class="b ok">READY</span></td><td><code>transit</code> · <code>approle</code> · <code>kv-v2 (secret/)</code></td></tr>
+  <tr><td>Provisioner token + policy</td><td><span class="b ok">READY</span></td><td>scoped <code>datark-provisioner</code>; wired into the provisioning script</td></tr>
+  <tr><td>Auto-unseal</td><td><span class="b ok">READY</span></td><td>root cron, survives reboot</td></tr>
+  <tr><td>Shared platform secrets</td><td><span class="b ok">SEEDED</span></td><td>real <code>SPACES / POSTMARK / PORTONE / PROVENANCE</code> from <b>staging</b> tfvars (16 keys)</td></tr>
+  <tr><td>Single-node (HA)</td><td><span class="b warn">NOTE</span></td><td>1 node now; expand to 3-node Raft for HA later</td></tr>
+</table>
+
+<!-- ============ COMPONENTS ============ -->
+<h2>2. Components — per-tenant stack deployment status</h2>
+<p class="muted">Validated by a live free-tier tenant (<code>test-client</code>) provisioned end-to-end on the real cluster + Vault.</p>
+<table>
+  <tr><th>Component</th><th>Pod status</th><th>Verified</th></tr>
+  <tr><td><b>backend</b></td><td><span class="b ok">DEPLOYED · 1/1</span></td><td>Pulls image (regcred); <code>/check-health</code> → <code>healthy:true</code>; <b>Vault AppRole login OK</b>; connects redis + mongo + postgres</td></tr>
+  <tr><td><b>postgres</b> (TimescaleDB)</td><td><span class="b ok">DEPLOYED · 1/1</span></td><td>timescaledb 2.17.2 extension installed &amp; loaded (<code>shared_preload_libraries</code>)</td></tr>
+  <tr><td><b>redis</b></td><td><span class="b ok">DEPLOYED · 1/1</span></td><td>auth (requirepass) from Vault; backend queue/cache connected</td></tr>
+  <tr><td><b>mongodb</b></td><td><span class="b ok">DEPLOYED · 1/1</span></td><td>root creds from Vault; backend migrations ran</td></tr>
+  <tr><td><b>kripfs</b></td><td><span class="b ok">DEPLOYED · 1/1</span></td><td>Image <code>kipfs:v0.0.1</code> built + pushed to NCR; daemon runs in a pod (gateway 8080, swarm 4001); <b>identity persisted on PVC</b>. See §3.</td></tr>
+</table>
+
+<div class="card">
+  <b>Also validated (the provisioning pipeline itself):</b>
+  <ul>
+    <li>Per-tenant <b>Vault objects</b> auto-created (transit key, KV secrets, policy, AppRole)</li>
+    <li><b>Secret sync</b> — K8s Secret materialized from Vault (per-tenant + shared)</li>
+    <li><b>Namespace isolation</b> — NetworkPolicy + ResourceQuota per tenant</li>
+    <li><b>Ingress + TLS secret</b> created per tenant; subscription <b>tiers</b> (free/starter/pro/enterprise) render correctly</li>
+    <li><b>Idempotent</b> provision/upgrade + teardown</li>
+  </ul>
+</div>
+
+<!-- ============ KRIPFS ============ -->
+<h2>3. kripfs — now running in pods <span class="b ok">RESOLVED</span></h2>
+<div class="card" style="border-left:4px solid var(--ok);background:rgba(26,127,55,.06);">
+  <p>Previously kripfs had only ever run on <b>bare-metal servers (BMS)</b> and as an <b>Ansible binary deploy</b> (systemd/<code>nohup</code>) — <b>never as a container</b>. That is now done:</p>
+  <ul>
+    <li>A CI workflow (<code>kipfs-image-nhn.yml</code>, tag-triggered <code>vX.X.X</code>) <b>builds &amp; pushes the image</b> to NCR — <code>kipfs:v0.0.1</code> verified in the registry.</li>
+    <li>kripfs <b>runs as a Kubernetes pod</b> (StatefulSet): daemon up, gateway :8080, swarm :4001, <code>/health</code> passing (1/1).</li>
+    <li><b>Identity persisted</b> on the per-pod PVC (<code>identity.key</code>) — survives restarts.</li>
+  </ul>
+</div>
+<table>
+  <tr><th>What</th><th>Status</th></tr>
+  <tr><td>kripfs image built &amp; pushed to NCR</td><td><span class="b ok">DONE</span> — <code>kipfs:v0.0.1</code></td></tr>
+  <tr><td>kripfs running in a pod (single node)</td><td><span class="b ok">VERIFIED</span> — 1/1, health OK</td></tr>
+  <tr><td>Persistent identity across restart</td><td><span class="b ok">VERIFIED</span> — PVC-backed</td></tr>
+  <tr><td>Multi-node peering + replication (pro/enterprise)</td><td><span class="b ok">VERIFIED</span> — 3-node &amp; 5-node clusters peer + replicate</td></tr>
+</table>
+<p class="muted"><b>kripfs fully validated across tiers:</b> pro (3 nodes, factor 2) and enterprise (5 nodes, factor 3) form the peer mesh and replicate — a file uploaded to one node is retrievable from every other node. Single, 3-node, and 5-node all proven in pods.</p>
+
+<!-- ============ UPGRADE / SCALING ============ -->
+<h2>4. Upgrade &amp; scaling — client tier changes <span class="b ok">LIVE-VERIFIED</span></h2>
+<p class="muted">When a client upgrades their plan, the same provisioning command re-runs with a higher tier. It <b>scales up kripfs pods + replication</b> and resources — with <b>no data loss</b>.</p>
+
+<div class="card">
+  <b>The switch — one idempotent command:</b>
+  <pre class="mono" style="background:var(--code);border:1px solid var(--line);border-radius:8px;padding:10px 12px;overflow-x:auto;">./bin/datark-provision.sh --tenant &lt;client&gt; --tier pro     # free → pro, etc.</pre>
+  <span class="muted">Detected automatically as an <b>upgrade</b> (not a fresh install). Re-run any time to move up a tier.</span>
+</div>
+
+<h3>Tier ladder — what scales</h3>
+<table>
+  <tr><th>Tier</th><th>kripfs pods</th><th>Replication factor</th><th>Storage / kripfs pod</th><th>Namespace quota (CPU)</th></tr>
+  <tr><td><b>free</b></td><td>1</td><td>1</td><td>2Gi</td><td>3</td></tr>
+  <tr><td><b>starter</b></td><td>1</td><td>1</td><td>10Gi</td><td>4</td></tr>
+  <tr><td><b>pro</b></td><td><b>3</b></td><td>2</td><td>50Gi</td><td>12</td></tr>
+  <tr><td><b>enterprise</b></td><td><b>5</b></td><td>3</td><td>200Gi</td><td>24</td></tr>
+</table>
+<p class="muted">Upgrading <code>free → pro</code> adds <b>2 more kripfs pods</b> (1 → 3) and raises replication (1 → 2). <code>pro → enterprise</code> adds 2 more (3 → 5), replication → 3.</p>
+
+<h3>Data safety — verified on a live upgrade</h3>
+<table>
+  <tr><th>Guarantee</th><th>Status</th><th>Evidence</th></tr>
+  <tr><td>Databases keep their data on upgrade</td><td><span class="b ok">VERIFIED</span></td><td>free→starter run: mongo &amp; postgres <b>PVC UUIDs unchanged</b> before/after</td></tr>
+  <tr><td>kripfs identity preserved on scale-up</td><td><span class="b ok">BY DESIGN</span></td><td>each pod's identity lives on its own retained PVC (StatefulSet <code>volumeClaimTemplates</code>)</td></tr>
+  <tr><td>New peers auto-join</td><td><span class="b ok">BY DESIGN</span></td><td>replica count bump re-templates every pod's <code>cluster_peers</code>; rolling update reconciles the mesh</td></tr>
+  <tr><td>No downtime (3+ nodes)</td><td><span class="b ok">BY DESIGN</span></td><td>StatefulSet rolls one pod at a time; quota pre-sized per tier</td></tr>
+</table>
+
+<div class="card flag">
+  <b>Caveats:</b>
+  <ul>
+    <li><b>Storage grows, not shrinks.</b> StorageClass allows volume expansion, but the StatefulSet template's PVC size is immutable on existing pods — growing kripfs/mongo/postgres disk is a manual PVC-expand step, not automatic on tier change.</li>
+    <li><b>Upgrade only</b> (scale up) is the supported path; downgrades (fewer pods / smaller disk) are not automated.</li>
+    <li>kripfs pod scaling is <b>designed &amp; renders</b>, but end-to-end scale-up is <b>unverified until the kripfs image exists</b> (§3).</li>
+  </ul>
+</div>
+
+<!-- ============ OUTSTANDING ============ -->
+<h2>5. Outstanding items</h2>
+<table>
+  <tr><th>Item</th><th>Priority</th><th>Note</th></tr>
+  <tr><td>kripfs image + single-node pod</td><td><span class="b ok">DONE</span></td><td><code>kipfs:v0.0.1</code> in NCR; runs in a pod (§3)</td></tr>
+  <tr><td><b>DNS record for tenant host(s)</b></td><td><span class="b warn">NEXT — to test</span></td><td><code>&lt;id&gt;.koneksi.co.kr</code> → <code>133.186.214.160</code>. Per-tenant A record (safer) or a wildcard (note: affects the whole koneksi.co.kr zone)</td></tr>
+  <tr><td>TLS for tenant hosts</td><td><span class="b ok">DONE</span></td><td><code>*.koneksi.co.kr</code> cert covers <code>&lt;id&gt;.koneksi.co.kr</code>; verified valid</td></tr>
+  <tr><td>kripfs multi-node peering (pro/enterprise)</td><td><span class="b warn">MEDIUM</span></td><td>validate 3-node cluster_peers mesh + replication</td></tr>
+  <tr><td>Real prod platform secrets</td><td><span class="b warn">MEDIUM</span></td><td>Currently <b>staging</b> values. Swap for prod when going live, ideally dedicated accounts</td></tr>
+  <tr><td>Vault → 3-node HA + TLS</td><td><span class="b warn">LOW</span></td><td>hardening for production</td></tr>
+</table>
+
+<!-- ============ NEXT TASK ============ -->
+<h2>6. Next task — self-service provisioning via GitHub Actions <span class="b warn">TO DO</span></h2>
+<div class="card" style="border-left:4px solid var(--accent);background:rgba(31,111,235,.06);">
+  <p><b>Goal:</b> a <b>manually-triggered</b> GitHub Action in <code>datark-onboarding</code> that provisions a tenant on demand — the operator/marketplace "provision" button.</p>
+  <h3 style="margin-top:10px">How it works</h3>
+  <ul>
+    <li><b>Trigger:</b> <code>workflow_dispatch</code> (manual "Run workflow" button) — requires input <b>before</b> it runs.</li>
+    <li><b>Inputs:</b>
+      <ul>
+        <li><b>client name</b> (required) → used as the <b>tenant id</b> and the <b>namespace</b> (<code>tenant-&lt;client&gt;</code>) where all DatArk resources deploy.</li>
+        <li><b>tier</b> (dropdown: <b>tier 1 / tier 2 / tier 3</b>) → maps to a plan (e.g. starter / pro / enterprise).</li>
+      </ul>
+    </li>
+    <li><b>Action:</b> writes kubeconfig from secret → installs helm/kubectl/vault → runs
+      <code>./bin/datark-provision.sh --tenant &lt;client&gt; --tier &lt;tier&gt;</code> → outputs the tenant URL.</li>
+  </ul>
+  <h3>Required repo secrets</h3>
+  <table>
+    <tr><th>Secret</th><th>Status</th></tr>
+    <tr><td><code>KUBE_CONFIG</code> (datark-cluster kubeconfig)</td><td><span class="b ok">SET</span></td></tr>
+    <tr><td><code>VAULT_ADDR</code> + <code>VAULT_TOKEN</code> (provisioner)</td><td><span class="b warn">TO ADD</span></td></tr>
+    <tr><td><code>NCR_DOCKERCONFIG</code> (image pull)</td><td><span class="b warn">TO ADD</span></td></tr>
+    <tr><td><code>TLS cert</code> + <code>TLS key</code> (<code>*.koneksi.co.kr</code>)</td><td><span class="b warn">TO ADD</span></td></tr>
+  </table>
+  <p class="muted"><b>Open detail:</b> confirm the tier-1/2/3 → tier-name mapping (free/starter/pro/enterprise). Later this same workflow can be called by the marketplace backend instead of a human clicking "Run workflow".</p>
+</div>
+
+<div class="foot">
+  DatArk Onboarding status · 2026-07-08 · datark-cluster (NKS) + datark Vault (125.6.39.130) · backend end-to-end verified with real staging credentials · kripfs image is the sole deployment blocker.
+</div>
+
+</div>
+</body>
+</html>

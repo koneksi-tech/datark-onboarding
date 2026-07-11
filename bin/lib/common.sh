@@ -15,7 +15,7 @@ if [[ -f "$REPO_DIR/.env" ]]; then
 fi
 
 # --- config (env-overridable; fed later when clusters exist) ---
-: "${DOMAIN:=datark.koneksi.co.kr}"
+: "${DOMAIN:=koneksi.co.kr}"
 : "${VAULT_ADDR:=}"                 # this env's Vault, e.g. https://vault.datark...
 : "${VAULT_TOKEN:=}"                # provisioner token (never committed)
 : "${VAULT_KV_MOUNT:=secret}"       # KV v2 mount

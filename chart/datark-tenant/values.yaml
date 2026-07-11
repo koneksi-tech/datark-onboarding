@@ -11,7 +11,7 @@ tier: "custom"                   # set by the tier values file (starter|pro|ente
 
 # Public DNS. Tenant URL = <tenant.id>.<domain>. Wildcard *.<domain> must point
 # at the shared ingress-nginx, with a wildcard TLS secret available.
-domain: "datark.koneksi.co.kr"
+domain: "koneksi.co.kr"        # tenant URL = <id>.koneksi.co.kr (covered by *.koneksi.co.kr cert)
 ingress:
   className: "nginx"
   tlsSecretName: "datark-wildcard-tls"   # wildcard cert secret (shared, pre-created)
@@ -24,8 +24,8 @@ secretName: ""                   # defaults to "<tenant.id>-secret" via _helpers
 imagePullSecret: "ncr-regcred"
 
 images:
-  # kripfs: NO image exists yet — must be built+pushed from app-repo/kripfs/Dockerfile.
-  kripfs:   "REPLACE_ME/kipfs:v1.0.0"
+  # kripfs image — built by the kripfs repo's kipfs-image-nhn workflow on vX.X.X tags.
+  kripfs:   "36163004-kr1-registry.container.nhncloud.com/koneksi-tech/kipfs:v0.0.1"
   # backend: reuse the existing NHN Container Registry image (koneksi-tech project).
   # NOTE: this registry is in the PROD koneksi NHN account (36163004). The new-account
   # cluster can only pull it if the repo is public/cross-account, else mirror it into

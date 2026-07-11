@@ -30,6 +30,12 @@ spec:
         - name: gen-config
           image: {{ .Values.images.kripfs | quote }}
           command: ["/bin/sh", "/gen/gen-config.sh"]
+          securityContext:
+            runAsUser: 0        # root: create + chown the PVC data dir for the kipfs user
+          # init containers must declare resources too when a ResourceQuota is set
+          resources:
+            requests: { cpu: "50m", memory: "64Mi" }
+            limits:   { cpu: "100m", memory: "128Mi" }
           env:
             - name: REPLICAS
               value: {{ .Values.kripfs.replicas | quote }}

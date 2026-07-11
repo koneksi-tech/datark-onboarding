@@ -23,7 +23,9 @@ data:
       fi
       i=$((i + 1))
     done
-    mkdir -p "${REPO_ROOT}/state" "${REPO_ROOT}/keys" "${REPO_ROOT}/audit"
+    mkdir -p "${REPO_ROOT}/state" "${REPO_ROOT}/keys" "${REPO_ROOT}/audit" "${REPO_ROOT}/blocks"
+    # init runs as root; hand the data dir to the non-root kipfs user the daemon runs as
+    chown -R kipfs:kipfs "${REPO_ROOT}" 2>/dev/null || true
     cat > /config/config.json <<EOF
     {
       "gateway_port": ${GATEWAY_PORT},
