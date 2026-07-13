@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DatArk Provisioning — Runbook</title>
+<style>
+  :root{--bg:#f6f8fa;--card:#fff;--ink:#1f2328;--muted:#57606a;--line:#d0d7de;--accent:#1f6feb;--accent2:#8250df;--ok:#1a7f37;--warn:#9a6700;--chip:#eaeef2;--code:#f0f3f6;}
+  @media (prefers-color-scheme:dark){:root{--bg:#0d1117;--card:#161b22;--ink:#e6edf3;--muted:#8b949e;--line:#30363d;--accent:#58a6ff;--accent2:#bc8cff;--ok:#3fb950;--warn:#d29922;--chip:#21262d;--code:#0b0f14;}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:960px;margin:0 auto;padding:32px 20px 80px;}
+  header.top{border-bottom:2px solid var(--line);padding-bottom:18px;margin-bottom:24px;}
+  h1{font-size:24px;margin:0 0 6px;}
+  h2{font-size:19px;margin:32px 0 12px;padding-top:10px;border-top:1px solid var(--line);}
+  .sub{color:var(--muted);font-size:14px;}
+  code{background:var(--code);padding:1px 6px;border-radius:5px;font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace;}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:10px;padding:12px 14px;overflow-x:auto;font:12.5px/1.5 ui-monospace,monospace;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:12px 0;}
+  table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13.5px;display:block;overflow-x:auto;}
+  th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top;}
+  th{background:var(--chip);font-weight:600;}
+  .flow{counter-reset:step;margin:14px 0;}
+  .step{position:relative;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;padding:12px 16px 12px 54px;margin:0 0 9px;}
+  .step::before{counter-increment:step;content:counter(step);position:absolute;left:13px;top:12px;width:27px;height:27px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:13px;}
+  .step h4{margin:0 0 3px;font-size:14.5px;} .step p{margin:2px 0;font-size:13px;color:var(--muted);}
+  .step.op{border-left-color:var(--accent2);} .step.op::before{background:var(--accent2);}
+  .arrow{text-align:center;color:var(--muted);font-size:16px;line-height:1;margin:-3px 0 5px;}
+  .badge{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:20px;background:var(--chip);color:var(--muted);}
+  .b1{background:rgba(31,111,235,.14);color:var(--accent);} .b2{background:rgba(130,80,223,.16);color:var(--accent2);}
+  ul{margin:6px 0 6px 2px;padding-left:20px;} li{margin:3px 0;}
+  .muted{color:var(--muted);} .ok{color:var(--ok);font-weight:600;} .warn{color:var(--warn);font-weight:600;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <span class="badge b1">RUNBOOK</span> <span class="badge b2">manual trigger</span>
+  <h1>DatArk Provisioning — Process Flow</h1>
+  <p class="sub">How to provision a new client (tenant) on the datark-cluster using the GitHub Action. One manual click → a fully isolated DatArk stack.</p>
+</header>
+
+<div class="card">
+  <b>TL;DR</b>
+  <ul>
+    <li>Repo: <code>koneksi-tech/datark-onboarding</code> → <b>Actions</b> tab → <b>Provision DatArk tenant</b> → <b>Run workflow</b>.</li>
+    <li>Enter <b>client name</b> + pick <b>tier</b> → the automation builds the whole stack in namespace <code>tenant-&lt;client&gt;</code>.</li>
+    <li>Result: a private DatArk env reachable at <code>https://&lt;client&gt;.koneksi.co.kr</code> (after a DNS record).</li>
+  </ul>
+</div>
+
+<h2>A. Operator steps — how to trigger</h2>
+<div class="flow">
+  <div class="step op"><h4>Open the workflow</h4><p>GitHub → <code>koneksi-tech/datark-onboarding</code> → <b>Actions</b> tab → left sidebar <b>Provision DatArk tenant</b>.</p></div>
+  <div class="arrow">▼</div>
+  <div class="step op"><h4>Run workflow</h4><p>Click <b>Run workflow</b> (top-right). A form appears.</p></div>
+  <div class="arrow">▼</div>
+  <div class="step op"><h4>Fill the inputs</h4>
+    <p><b>client_name</b> — the client's name. Becomes the tenant id + namespace <code>tenant-&lt;name&gt;</code> and URL <code>&lt;name&gt;.koneksi.co.kr</code>. Use lowercase letters/numbers/hyphens (e.g. <code>acme</code>).</p>
+    <p><b>tier</b> — dropdown: <b>tier1 / tier2 / tier3</b> (see mapping below).</p>
+  </div>
+  <div class="arrow">▼</div>
+  <div class="step op"><h4>Start + watch</h4><p>Click the green <b>Run workflow</b>. Open the run to watch live logs. On success, the <b>Summary</b> shows the tenant URL.</p></div>
+</div>
+
+<table>
+  <tr><th>Dropdown</th><th>Plan</th><th>kripfs nodes</th><th>Replication</th></tr>
+  <tr><td><code>tier1</code></td><td>starter</td><td>1</td><td>1</td></tr>
+  <tr><td><code>tier2</code></td><td>pro</td><td>3</td><td>2</td></tr>
+  <tr><td><code>tier3</code></td><td>enterprise</td><td>5</td><td>3</td></tr>
+</table>
+
+<h2>B. What the automation does (under the hood)</h2>
+<p class="muted">The workflow runner executes these steps automatically after you click Run:</p>
+<div class="flow">
+  <div class="step"><h4>Prepare runner</h4><p>Checks out the repo, maps <code>tier1/2/3 → starter/pro/enterprise</code>, installs kubectl + helm + vault.</p></div>
+  <div class="arrow">▼</div>
+  <div class="step"><h4>Load credentials (from repo secrets)</h4><p>Writes the <b>kubeconfig</b>, <b>NCR pull secret</b>, and <b>*.koneksi.co.kr TLS cert/key</b> from GitHub Secrets; exports <b>Vault</b> address + provisioner token.</p></div>
+  <div class="arrow">▼</div>
+  <div class="step"><h4>Validate + pre-flight</h4><p>Checks the client name/tier, and that the cluster, StorageClass, ingress and Vault are all reachable. Fails fast if not.</p></div>
+  <div class="arrow">▼</div>
+  <div class="step"><h4>Namespace + pull secret + TLS</h4><p>Creates namespace <code>tenant-&lt;client&gt;</code>, the <code>ncr-regcred</code> image-pull secret, and the wildcard TLS secret.</p></div>
+  <div class="arrow">▼</div>
+  <div class="step"><h4>Vault (per-tenant)</h4><p>Creates a transit key, generates per-tenant secrets (kripfs bearer/cluster-secret, mongo/redis/postgres passwords, app keys), and a scoped policy + AppRole — all under <code>secret/datark/tenants/&lt;client&gt;</code>.</p></div>
+  <div class="arrow">▼</div>
+  <div class="step"><h4>Materialize K8s Secret</h4><p>Reads the tenant's secrets from Vault (plus shared platform secrets) → writes the in-namespace <code>&lt;client&gt;-secret</code> the pods consume.</p></div>
+  <div class="arrow">▼</div>
+  <div class="step"><h4>Deploy the stack (Helm)</h4><p>Installs <b>kripfs</b> (N nodes) + <b>backend</b> + <b>redis</b> + <b>mongodb</b> + <b>postgres</b> + <b>ingress</b> + NetworkPolicy + ResourceQuota for the chosen tier.</p></div>
+  <div class="arrow">▼</div>
+  <div class="step"><h4>Output</h4><p>Prints the result in the run Summary: namespace, tier, and <code>https://&lt;client&gt;.koneksi.co.kr</code>.</p></div>
+</div>
+
+<h2>C. After provisioning — make it reachable</h2>
+<div class="card">
+  <ol>
+    <li><b>Add DNS</b> — one A record in the <code>koneksi.co.kr</code> zone:
+      <pre>&lt;client&gt;.koneksi.co.kr.   A   133.186.214.160</pre>
+      (<code>133.186.214.160</code> = the shared ingress LoadBalancer.)</li>
+    <li><b>Access</b> — <code>https://&lt;client&gt;.koneksi.co.kr</code> — valid TLS (covered by the <code>*.koneksi.co.kr</code> cert).</li>
+    <li><b>Verify without DNS</b> (optional):
+      <pre>curl --resolve &lt;client&gt;.koneksi.co.kr:443:133.186.214.160 \
+     https://&lt;client&gt;.koneksi.co.kr/check-health</pre></li>
+  </ol>
+</div>
+
+<h2>D. Isolation — what each client gets</h2>
+<ul>
+  <li><b>Own namespace</b> <code>tenant-&lt;client&gt;</code> — pods, storage, secrets private to it (NetworkPolicy + ResourceQuota).</li>
+  <li><b>Own kripfs cluster</b> (1/3/5 nodes by tier) with its <b>own bearer token</b> — tenant A cannot read tenant B's storage.</li>
+  <li><b>Own databases</b> (mongo + postgres + redis) with per-tenant passwords from Vault.</li>
+  <li><b>Own Vault path + transit key</b> — secrets and encryption scoped per tenant.</li>
+</ul>
+
+<h2>E. Upgrade &amp; teardown</h2>
+<table>
+  <tr><th>Action</th><th>How</th></tr>
+  <tr><td><b>Upgrade tier</b> (more kripfs nodes)</td><td>Re-run the workflow for the same client with a higher tier. Data is retained (PVCs kept). <span class="warn">Note:</span> a tier whose DB storage size differs can hit an immutable-volume error — grow storage manually if needed.</td></tr>
+  <tr><td><b>Deprovision</b></td><td>CLI: <code>./bin/datark-deprovision.sh --tenant &lt;client&gt; --force</code> — deletes the namespace (pods, PVCs, secrets) and the tenant's Vault objects.</td></tr>
+</table>
+
+<div class="card" style="border-left:4px solid var(--warn);background:rgba(154,103,0,.06);">
+  <b>Prerequisites (one-time, already done):</b>
+  <ul>
+    <li>Repo secrets set: <code>KUBE_CONFIG</code>, <code>VAULT_ADDR</code>, <code>VAULT_TOKEN</code>, <code>NCR_DOCKERCONFIG</code>, <code>TLS_FULLCHAIN</code>, <code>TLS_KEY</code>.</li>
+    <li>Cluster ready: StorageClass, ingress-nginx + LB <code>133.186.214.160</code>. Vault ready at its address. kripfs image <code>kipfs:v0.0.1</code> in NCR.</li>
+  </ul>
+</div>
+
+<div class="foot" style="margin-top:36px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;">
+  DatArk provisioning runbook · workflow <code>.github/workflows/provision-tenant.yml</code> · one manual trigger → isolated per-tenant DatArk stack.
+</div>
+
+</div>
+</body>
+</html>
