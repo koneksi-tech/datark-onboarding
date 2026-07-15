@@ -55,7 +55,7 @@ trap 'rollback' ERR
 
 # 1) namespace + pull secret
 kc get ns "$NS" >/dev/null 2>&1 || kc create ns "$NS" >/dev/null
-kc label ns "$NS" datark.koneksi.co.kr/tenant="$TENANT" --overwrite >/dev/null
+kc label ns "$NS" datark.koneksi.co.kr/tenant="$TENANT" datark.koneksi.co.kr/tier="$TIER" --overwrite >/dev/null
 [[ -f "$REPO_DIR/.ncr-dockerconfig.json" ]] && kc create secret generic "$IMAGE_PULL_SECRET" -n "$NS" \
   --type=kubernetes.io/dockerconfigjson \
   --from-file=.dockerconfigjson="$REPO_DIR/.ncr-dockerconfig.json" \

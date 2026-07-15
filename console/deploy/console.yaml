@@ -30,6 +30,10 @@ rules:
   - apiGroups: ["networking.k8s.io"]
     resources: ["ingresses"]
     verbs: ["get", "list", "watch"]
+  # destroy tenant = delete its namespace (console Destroy button)
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["delete"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -63,7 +67,7 @@ spec:
         - name: ncr-regcred
       containers:
         - name: console
-          image: 36163004-kr1-registry.container.nhncloud.com/koneksi-tech/onboarding-console:v0.0.2-console
+          image: 36163004-kr1-registry.container.nhncloud.com/koneksi-tech/onboarding-console:v0.0.3-console
           ports:
             - { name: http, containerPort: 3000 }
           env:

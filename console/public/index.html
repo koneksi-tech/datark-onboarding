@@ -38,6 +38,7 @@
   .green{background:var(--ok)}.amber{background:var(--warn)}.red{background:var(--danger)}.gray{background:var(--muted)}
   .tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:var(--chip);color:var(--muted)}
   a.lnk{color:var(--accent);text-decoration:none} .muted{color:var(--muted)}
+  .del{color:var(--danger);cursor:pointer;font-weight:600;font-size:12px}
   .ecard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-bottom:12px}
 </style>
 </head>
@@ -87,6 +88,12 @@ function shell(inner){
 window.go = id => { view=id; currentTenant=null; render(); };
 window.logout = async () => { await fetch('/api/logout',{method:'POST'}); if(timer)clearInterval(timer); renderLogin('Signed out.'); };
 window.openTenant = name => { currentTenant=name; view='tenant'; render(); };
+window.destroyTenant = async name => {
+  if(!confirm(`Destroy tenant "${name}"?\n\nThis permanently deletes namespace tenant-${name} and ALL its data (pods, volumes, secrets). This cannot be undone.`)) return;
+  const r = await fetch('/api/tenants/'+name, {method:'DELETE'});
+  if(!r.ok){ const e=await r.json().catch(()=>({})); alert('Destroy failed: '+(e.error||r.status)); return; }
+  render();
+};
 
 // ---------- VIEWS ----------
 async function render(){
@@ -102,10 +109,11 @@ async function renderDashboard(){
     <td><b>${t.name}</b></td><td><span class="tag">${t.tier}</span></td>
     <td><span class="dot ${dot(t.status)}"></span>${t.status}</td><td>${t.pods}</td>
     <td>${t.endpoint?`<a class="lnk" href="${t.endpoint}" target="_blank" onclick="event.stopPropagation()">${t.endpoint.replace('https://','')} ↗</a>`:'<span class="muted">—</span>'}</td>
+    <td><span class="del" onclick="event.stopPropagation();destroyTenant('${t.name}')">🗑 Destroy</span></td>
   </tr>`).join('');
   shell(`<div class="top"><div class="h">Tenants</div><button class="btn" onclick="alert('Onboard — Phase 2 (provisioner Job)')">＋ Onboard Tenant</button></div>
-    <table><thead><tr><th>TENANT</th><th>TIER</th><th>STATUS</th><th>PODS</th><th>ENDPOINT</th></tr></thead>
-    <tbody>${rows||'<tr><td colspan=5 class=muted>No tenants.</td></tr>'}</tbody></table>
+    <table><thead><tr><th>TENANT</th><th>TIER</th><th>STATUS</th><th>PODS</th><th>ENDPOINT</th><th></th></tr></thead>
+    <tbody>${rows||'<tr><td colspan=6 class=muted>No tenants.</td></tr>'}</tbody></table>
     <p class="muted" style="font-size:12px;margin-top:8px">Click a tenant to see its components.</p>`);
 }
 async function renderTenant(){

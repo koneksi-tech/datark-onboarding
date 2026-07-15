@@ -87,6 +87,16 @@ app.get('/api/tenants/:name', requireAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: String(e.message || e) }); }
 });
 
+// ---- destroy a tenant (delete its namespace) ----
+app.delete('/api/tenants/:name', requireAuth, async (req, res) => {
+  const ns = NS_PREFIX + req.params.name;
+  if (!ns.startsWith(NS_PREFIX) || ns === NS_PREFIX) return res.status(400).json({ error: 'invalid tenant' });
+  try {
+    await core.deleteNamespace(ns);
+    res.json({ ok: true, namespace: ns });
+  } catch (e) { res.status(500).json({ error: String(e.message || e) }); }
+});
+
 // ---- cluster nodes ----
 app.get('/api/nodes', requireAuth, async (_req, res) => {
   try {
