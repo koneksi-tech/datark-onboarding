@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DatArk Console</title>
+<style>
+  :root{--bg:#f6f8fa;--card:#fff;--ink:#1f2328;--muted:#57606a;--line:#d0d7de;--accent:#1f6feb;--ok:#1a7f37;--warn:#9a6700;--danger:#cf222e;--chip:#eaeef2;}
+  @media (prefers-color-scheme:dark){:root{--bg:#0d1117;--card:#161b22;--ink:#e6edf3;--muted:#8b949e;--line:#30363d;--accent:#58a6ff;--ok:#3fb950;--warn:#d29922;--danger:#f85149;--chip:#21262d;}}
+  *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .app{display:flex;min-height:100vh}
+  .side{width:190px;background:var(--card);border-right:1px solid var(--line);padding:16px 12px}
+  .brand{font-weight:800;font-size:17px;color:var(--accent);margin-bottom:16px}
+  .side a{display:block;padding:8px 10px;border-radius:8px;color:var(--ink);text-decoration:none;margin-bottom:3px}
+  .side a.on{background:rgba(31,111,235,.12);color:var(--accent);font-weight:600}
+  .main{flex:1;padding:20px 24px}
+  .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+  .h{font-size:18px;font-weight:700}
+  .btn{background:var(--ok);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-weight:700;font-size:13px;cursor:pointer}
+  table{width:100%;border-collapse:collapse;font-size:13px;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  th{background:var(--chip);text-align:left;padding:9px 11px;font-size:11px;color:var(--muted)}
+  td{padding:10px 11px;border-top:1px solid var(--line)}
+  .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+  .green{background:var(--ok)}.amber{background:var(--warn)}.red{background:var(--danger)}.gray{background:var(--muted)}
+  .tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:var(--chip);color:var(--muted)}
+  a.lnk{color:var(--accent);text-decoration:none}
+  .muted{color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="side">
+    <div class="brand">◆ DatArk</div>
+    <a class="on">▦ Dashboard</a>
+    <a>◷ Tenants</a>
+    <a>▤ Cluster</a>
+    <a>⚙ Settings</a>
+  </div>
+  <div class="main">
+    <div class="top">
+      <div class="h">Tenants</div>
+      <button class="btn" onclick="alert('Onboard flow — Phase 2 (in-cluster provisioner Job).')">＋ Onboard Tenant</button>
+    </div>
+    <table id="t">
+      <thead><tr><th>TENANT</th><th>TIER</th><th>STATUS</th><th>PODS</th><th>ENDPOINT</th></tr></thead>
+      <tbody><tr><td colspan="5" class="muted">Loading…</td></tr></tbody>
+    </table>
+    <p class="muted" id="err" style="display:none"></p>
+  </div>
+</div>
+<script>
+function dot(s){return s==='healthy'?'green':s==='degraded'?'amber':s==='unknown'?'gray':'red';}
+async function load(){
+  try{
+    const r = await fetch('/api/tenants'); const d = await r.json();
+    if(d.error) throw new Error(d.error);
+    const rows = (d.tenants||[]).map(t=>`<tr>
+      <td><b>${t.name}</b></td>
+      <td><span class="tag">${t.tier}</span></td>
+      <td><span class="dot ${dot(t.status)}"></span>${t.status}</td>
+      <td>${t.pods}</td>
+      <td>${t.endpoint?`<a class="lnk" href="${t.endpoint}" target="_blank">${t.endpoint.replace('https://','')} ↗</a>`:'<span class="muted">—</span>'}</td>
+    </tr>`).join('');
+    document.querySelector('#t tbody').innerHTML = rows || '<tr><td colspan="5" class="muted">No tenants yet.</td></tr>';
+  }catch(e){
+    document.querySelector('#t tbody').innerHTML='<tr><td colspan="5" class="muted">—</td></tr>';
+    const el=document.getElementById('err'); el.style.display='block'; el.textContent='API error: '+e.message;
+  }
+}
+load(); setInterval(load, 10000);
+</script>
+</body>
+</html>

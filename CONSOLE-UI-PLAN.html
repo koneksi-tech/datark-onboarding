@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DatArk Console — UI Plan &amp; Mockups</title>
+<style>
+  :root{--bg:#f6f8fa;--card:#fff;--ink:#1f2328;--muted:#57606a;--line:#d0d7de;--accent:#1f6feb;--accent2:#8250df;--ok:#1a7f37;--warn:#9a6700;--danger:#cf222e;--chip:#eaeef2;--code:#f0f3f6;}
+  @media (prefers-color-scheme:dark){:root{--bg:#0d1117;--card:#161b22;--ink:#e6edf3;--muted:#8b949e;--line:#30363d;--accent:#58a6ff;--accent2:#bc8cff;--ok:#3fb950;--warn:#d29922;--danger:#f85149;--chip:#21262d;--code:#0b0f14;}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:1060px;margin:0 auto;padding:32px 20px 90px;}
+  header.top{border-bottom:2px solid var(--line);padding-bottom:18px;margin-bottom:22px;}
+  h1{font-size:25px;margin:0 0 6px;} h2{font-size:20px;margin:36px 0 12px;padding-top:12px;border-top:1px solid var(--line);}
+  h3{font-size:15.5px;margin:20px 0 6px;}
+  .sub{color:var(--muted);font-size:14px;}
+  code{background:var(--code);padding:1px 5px;border-radius:5px;font:12px ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-word;}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:11px 13px;overflow-x:auto;font:12px/1.5 ui-monospace,monospace;}
+  table{border-collapse:collapse;width:100%;margin:9px 0;font-size:13px;display:block;overflow-x:auto;}
+  th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top;}
+  th{background:var(--chip);font-weight:600;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:15px 18px;margin:12px 0;}
+  .tldr{border-left:4px solid var(--accent);background:rgba(31,111,235,.06);}
+  .rec{border-left:4px solid var(--ok);background:rgba(26,127,55,.06);}
+  ul{margin:7px 0 7px 2px;padding-left:20px;} li{margin:4px 0;}
+  .muted{color:var(--muted);}
+  .pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;background:var(--chip);color:var(--muted);}
+  /* ===== SVG arch ===== */
+  .svgwrap{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;margin:14px 0;overflow-x:auto;}
+  svg.arch{width:100%;min-width:760px;height:auto;display:block}
+  svg.arch .b{fill:var(--bg);stroke:var(--line);stroke-width:1.5}
+  svg.arch .pub{fill:rgba(31,111,235,.10);stroke:var(--accent);stroke-width:2}
+  svg.arch .con{fill:rgba(130,80,223,.08);stroke:var(--accent2);stroke-width:1.8}
+  svg.arch .t{fill:var(--ink);font:700 12.5px -apple-system,sans-serif}
+  svg.arch .s{fill:var(--muted);font:10px ui-monospace,monospace}
+  svg.arch .l{stroke:var(--muted);stroke-width:1.6;fill:none}
+  svg.arch .el{fill:var(--muted);font:9.5px ui-monospace,monospace}
+  svg.arch .nsb{fill:none;stroke:var(--ok);stroke-width:1.5;stroke-dasharray:5 4}
+  svg.arch .nsl{fill:var(--ok);font:700 10px sans-serif}
+  /* ===== UI MOCKUPS ===== */
+  .mock{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:14px 0;box-shadow:0 2px 10px rgba(0,0,0,.06);}
+  .mock .bar{background:var(--chip);padding:6px 12px;font-size:11px;color:var(--muted);border-bottom:1px solid var(--line);display:flex;gap:6px;align-items:center}
+  .dot3{display:flex;gap:5px;margin-right:8px} .dot3 i{width:10px;height:10px;border-radius:50%;display:inline-block}
+  .dot3 i:nth-child(1){background:#ff5f57}.dot3 i:nth-child(2){background:#febc2e}.dot3 i:nth-child(3){background:#28c840}
+  .app{background:var(--bg);display:flex;min-height:340px}
+  .side{width:170px;background:var(--card);border-right:1px solid var(--line);padding:14px 10px;font-size:13px}
+  .side .brand{font-weight:800;font-size:15px;margin-bottom:14px;color:var(--accent)}
+  .side a{display:block;padding:7px 10px;border-radius:7px;color:var(--ink);text-decoration:none;margin-bottom:3px}
+  .side a.on{background:rgba(31,111,235,.12);color:var(--accent);font-weight:600}
+  .main{flex:1;padding:16px 18px;min-width:0}
+  .top2{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+  .h{font-size:16px;font-weight:700}
+  .btn{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:700;font-size:13px;cursor:default}
+  .btn.g{background:var(--ok)} .btn.o{background:transparent;color:var(--accent);border:1px solid var(--accent)} .btn.d{background:transparent;color:var(--danger);border:1px solid var(--danger)}
+  .stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .stat{flex:1;min-width:110px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .stat .n{font-size:22px;font-weight:800} .stat .k{font-size:11px;color:var(--muted)}
+  .tbl{width:100%;border-collapse:collapse;font-size:12.5px;display:table}
+  .tbl th{background:var(--chip);text-align:left;padding:7px 9px;font-size:11px;color:var(--muted);border:none}
+  .tbl td{padding:8px 9px;border-top:1px solid var(--line);vertical-align:middle}
+  .sdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+  .green{background:var(--ok)} .amber{background:var(--warn)} .red{background:var(--danger)}
+  .tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
+  .t-free{background:var(--chip);color:var(--muted)} .t-pro{background:rgba(31,111,235,.14);color:var(--accent)} .t-ent{background:rgba(130,80,223,.16);color:var(--accent2)} .t-start{background:rgba(26,127,55,.14);color:var(--ok)}
+  .lnk{color:var(--accent);text-decoration:none}
+  .mini{font-size:11px;color:var(--muted)}
+  /* modal mock */
+  .modal{position:relative;background:rgba(0,0,0,.28);padding:22px;display:flex;justify-content:center}
+  .sheet{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;width:460px;max-width:100%;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+  .field{margin:10px 0} .field label{font-size:12px;font-weight:600;display:block;margin-bottom:4px}
+  .field input{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink);font-size:13px}
+  .tiers{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0}
+  .tc{border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-size:12px}
+  .tc.sel{border-color:var(--accent);background:rgba(31,111,235,.08)}
+  .tc b{font-size:13px} .tc .sp{color:var(--muted);font-size:11px}
+  .wf{display:flex;gap:6px;align-items:center;font-size:12px;margin:5px 0}
+  .stepn{width:20px;height:20px;border-radius:50%;background:var(--ok);color:#fff;font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center}
+  .stepn.p{background:var(--chip);color:var(--muted)}
+  .phase{display:flex;gap:10px;margin:8px 0} .phase .pn{flex:0 0 26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <span class="pill" style="background:rgba(31,111,235,.14);color:var(--accent)">PLAN · v0.1</span>
+  <h1>DatArk Console — Ops UI Plan &amp; Mockups</h1>
+  <p class="sub">A web console to monitor every tenant namespace, view exposed endpoints, and onboard a new tenant with one click (client name + tier). Plan, sample UI, and implementation. 2026-07-15.</p>
+</header>
+
+<div class="card tldr">
+  <b>What we're building</b>
+  <ul>
+    <li>A <b>web console</b> (“DatArk Console”) for the ops team — runs inside the cluster with read access to all <code>tenant-*</code> namespaces.</li>
+    <li><b>Monitor:</b> live deployment status per namespace (pods ready, workload health) + the <b>exposed ingress endpoint</b> per tenant.</li>
+    <li><b>Onboard:</b> an <b>Onboard</b> button → enter client name + pick a tier → provisions a full isolated tenant (reusing the automation we already built).</li>
+    <li><b>Manage:</b> per-tenant detail, upgrade tier, deprovision.</li>
+  </ul>
+</div>
+
+<!-- ============ ARCHITECTURE ============ -->
+<h2>1. Architecture</h2>
+<p class="muted">A single small app (frontend SPA + a thin API) deployed in its own <code>datark-console</code> namespace. The API holds the Kubernetes access (via an in-cluster ServiceAccount + RBAC) — the browser never touches kube credentials. Provisioning reuses the existing pipeline.</p>
+
+<div class="svgwrap">
+<svg class="arch" viewBox="0 0 820 430" role="img" aria-label="DatArk Console architecture">
+  <defs><marker id="a" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--muted)"/></marker></defs>
+  <!-- user -->
+  <rect class="b" x="30" y="20" width="150" height="40" rx="8"/>
+  <text class="t" x="105" y="38" text-anchor="middle">👤 Ops user</text>
+  <text class="s" x="105" y="52" text-anchor="middle">browser + login</text>
+  <path class="l" x1="0" d="M180,40 H250" marker-end="url(#a)"/>
+  <text class="el" x="185" y="34">HTTPS</text>
+  <text class="el" x="182" y="72">console.koneksi.co.kr</text>
+
+  <!-- console namespace -->
+  <rect class="nsb" x="250" y="8" width="330" height="220" rx="12"/>
+  <text class="nsl" x="264" y="26">namespace  datark-console</text>
+  <rect class="pub" x="270" y="40" width="130" height="46" rx="9"/>
+  <text class="t" x="335" y="60" text-anchor="middle">Frontend</text><text class="s" x="335" y="75" text-anchor="middle">React SPA</text>
+  <rect class="con" x="270" y="120" width="290" height="92" rx="9"/>
+  <text class="t" x="415" y="140" text-anchor="middle">Console API</text>
+  <text class="s" x="415" y="156" text-anchor="middle">Node/Go · in-cluster ServiceAccount</text>
+  <text class="s" x="415" y="172" text-anchor="middle">reads K8s · triggers provisioning</text>
+  <text class="s" x="415" y="192" text-anchor="middle">RBAC-scoped to tenant-*</text>
+  <path class="l" d="M335,86 V120" marker-end="url(#a)"/>
+  <text class="el" x="342" y="106">/api</text>
+
+  <!-- k8s API -->
+  <rect class="b" x="620" y="40" width="170" height="46" rx="9"/>
+  <text class="t" x="705" y="60" text-anchor="middle">Kubernetes API</text><text class="s" x="705" y="75" text-anchor="middle">datark-cluster</text>
+  <path class="l" d="M560,150 C610,120 640,95 640,88" marker-end="url(#a)"/>
+  <text class="el" x="566" y="120">get/list/watch</text>
+
+  <!-- provisioner -->
+  <rect class="b" x="620" y="120" width="170" height="50" rx="9"/>
+  <text class="t" x="705" y="140" text-anchor="middle">Provisioner</text><text class="s" x="705" y="156" text-anchor="middle">Job / GH Actions</text>
+  <path class="l" d="M560,168 H620" marker-end="url(#a)"/>
+  <text class="el" x="566" y="162">onboard</text>
+
+  <!-- tenant namespaces -->
+  <rect class="nsb" x="250" y="250" width="540" height="150" rx="12" style="stroke:var(--accent2)"/>
+  <text class="nsl" x="264" y="268" style="fill:var(--accent2)">tenant namespaces (read + provision target)</text>
+  <rect class="b" x="270" y="286" width="150" height="96" rx="9"/>
+  <text class="t" x="345" y="306" text-anchor="middle">tenant-A</text>
+  <text class="s" x="345" y="323" text-anchor="middle">backend·kipfs·redis</text><text class="s" x="345" y="337" text-anchor="middle">mongo·pg·kripfs-db</text>
+  <text class="s" x="345" y="357" text-anchor="middle">→ a.koneksi.co.kr</text>
+  <rect class="b" x="440" y="286" width="150" height="96" rx="9"/>
+  <text class="t" x="515" y="306" text-anchor="middle">tenant-B</text>
+  <text class="s" x="515" y="323" text-anchor="middle">…same stack…</text>
+  <text class="s" x="515" y="357" text-anchor="middle">→ b.koneksi.co.kr</text>
+  <rect class="b" x="610" y="286" width="150" height="96" rx="9" style="stroke-dasharray:4 3"/>
+  <text class="s" x="685" y="330" text-anchor="middle">+ new tenant</text>
+  <text class="s" x="685" y="346" text-anchor="middle">(from Onboard)</text>
+  <path class="l" d="M415,212 V250" marker-end="url(#a)"/>
+</svg>
+</div>
+
+<h2>2. Components</h2>
+<table>
+  <tr><th>Component</th><th>What it does</th><th>Tech (recommended)</th></tr>
+  <tr><td><b>Frontend (SPA)</b></td><td>Dashboard, tenant detail, onboard modal. Talks only to the Console API.</td><td>React + Vite + a light UI kit; served static via nginx</td></tr>
+  <tr><td><b>Console API</b></td><td>Reads K8s state, exposes clean JSON to the UI, triggers provisioning, handles auth.</td><td>Node.js (<code>@kubernetes/client-node</code>) or Go (<code>client-go</code>)</td></tr>
+  <tr><td><b>K8s access</b></td><td>In-cluster ServiceAccount + RBAC. Never exposes kubeconfig to the browser.</td><td>ServiceAccount + ClusterRole (read) + Role (provision)</td></tr>
+  <tr><td><b>Provisioning trigger</b></td><td>Turns an Onboard click into a real tenant.</td><td>See §3 — <b>in-cluster Job</b> or <b>GitHub Actions</b></td></tr>
+  <tr><td><b>Auth</b></td><td>Only the ops team can view/act.</td><td>OIDC (Google/GitHub) or a simple gateway auth to start</td></tr>
+  <tr><td><b>Deployment</b></td><td>Runs in <code>datark-console</code> ns, exposed at <code>console.koneksi.co.kr</code>.</td><td>Helm chart + ingress + <code>*.koneksi.co.kr</code> TLS</td></tr>
+</table>
+
+<h2>3. How the Onboard button provisions (the key decision)</h2>
+<table>
+  <tr><th>Option</th><th>How</th><th>Pros / cons</th></tr>
+  <tr><td><b>A · In-cluster Job ★</b></td><td>API creates a K8s <code>Job</code> from the provisioner image (helm+vault+scripts) that runs <code>datark-provision.sh --tenant X --tier Y</code>. API streams the Job logs to the UI.</td><td>+ self-contained, fast, no external dep · + live logs · − must package the provisioner as an image + mount Vault/NCR/TLS secrets</td></tr>
+  <tr><td><b>B · GitHub Actions</b></td><td>API calls the existing <code>provision-tenant.yml</code> <code>workflow_dispatch</code> via the GitHub API; polls run status.</td><td>+ reuses the proven, already-built pipeline · + zero new provisioning code · − needs a GitHub token, slower, logs live on GitHub</td></tr>
+  <tr><td><b>C · Operator/CRD</b></td><td>A <code>Tenant</code> custom resource; a controller reconciles it. UI just creates the CR.</td><td>+ most “Kubernetes-native”, declarative · − biggest build; overkill for now</td></tr>
+</table>
+<div class="card rec"><b>Recommendation:</b> Start with <b>A (in-cluster Job)</b> — it’s self-contained, gives live provisioning logs in the UI, and packages the automation we already wrote. Keep <b>B</b> as a fallback (the workflow already exists). Graduate to <b>C</b> only if this grows into a real product surface.</div>
+
+<!-- ============ SAMPLE UI ============ -->
+<h2>4. Sample UI</h2>
+
+<h3>4.1 Dashboard — all tenants at a glance</h3>
+<div class="mock">
+  <div class="bar"><span class="dot3"><i></i><i></i><i></i></span> console.koneksi.co.kr</div>
+  <div class="app">
+    <div class="side">
+      <div class="brand">◆ DatArk</div>
+      <a class="on">▦ Dashboard</a>
+      <a>◷ Tenants</a>
+      <a>▤ Cluster</a>
+      <a>⚙ Settings</a>
+    </div>
+    <div class="main">
+      <div class="top2"><div class="h">Tenants</div><button class="btn g">＋ Onboard Tenant</button></div>
+      <div class="stats">
+        <div class="stat"><div class="n">4</div><div class="k">Tenants</div></div>
+        <div class="stat"><div class="n" style="color:var(--ok)">3</div><div class="k">Healthy</div></div>
+        <div class="stat"><div class="n" style="color:var(--warn)">1</div><div class="k">Degraded</div></div>
+        <div class="stat"><div class="n">31%</div><div class="k">Cluster CPU</div></div>
+      </div>
+      <table class="tbl">
+        <tr><th>TENANT</th><th>TIER</th><th>STATUS</th><th>PODS</th><th>ENDPOINT</th><th></th></tr>
+        <tr><td><b>demo</b></td><td><span class="tag t-free">free</span></td><td><span class="sdot green"></span>Healthy</td><td>6/6</td><td><a class="lnk">demo.koneksi.co.kr ↗</a></td><td class="mini">⋯</td></tr>
+        <tr><td><b>acme</b></td><td><span class="tag t-pro">pro</span></td><td><span class="sdot green"></span>Healthy</td><td>8/8</td><td><a class="lnk">acme.koneksi.co.kr ↗</a></td><td class="mini">⋯</td></tr>
+        <tr><td><b>initech</b></td><td><span class="tag t-ent">enterprise</span></td><td><span class="sdot green"></span>Healthy</td><td>10/10</td><td><a class="lnk">initech.koneksi.co.kr ↗</a></td><td class="mini">⋯</td></tr>
+        <tr><td><b>hundai</b></td><td><span class="tag t-pro">pro</span></td><td><span class="sdot amber"></span>Degraded</td><td>7/8</td><td><a class="lnk">hundai.koneksi.co.kr ↗</a></td><td class="mini">⋯</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<h3>4.2 Tenant detail — per-namespace status &amp; endpoint</h3>
+<div class="mock">
+  <div class="bar"><span class="dot3"><i></i><i></i><i></i></span> console.koneksi.co.kr / tenants / acme</div>
+  <div class="app">
+    <div class="side">
+      <div class="brand">◆ DatArk</div>
+      <a>▦ Dashboard</a><a class="on">◷ Tenants</a><a>▤ Cluster</a><a>⚙ Settings</a>
+    </div>
+    <div class="main">
+      <div class="top2">
+        <div><div class="h">acme &nbsp;<span class="tag t-pro">pro</span></div><div class="mini">namespace tenant-acme · created 2026-07-11</div></div>
+        <div style="display:flex;gap:6px"><button class="btn o">▲ Upgrade</button><button class="btn d">🗑 Deprovision</button></div>
+      </div>
+      <div class="card" style="margin:0 0 12px;padding:10px 13px">
+        <b>Endpoint</b> &nbsp;<span class="sdot green"></span><a class="lnk">https://acme.koneksi.co.kr</a> &nbsp;<span class="tag t-start">TLS valid</span>
+        <div class="mini" style="margin-top:3px">ingress-nginx → backend · internal: kipfs/redis/mongo/postgres (ClusterIP)</div>
+      </div>
+      <table class="tbl">
+        <tr><th>WORKLOAD</th><th>KIND</th><th>STATUS</th><th>DETAIL</th></tr>
+        <tr><td>acme-backend</td><td>Deployment</td><td><span class="sdot green"></span>1/1</td><td class="mini">API · public</td></tr>
+        <tr><td>acme-kripfs</td><td>StatefulSet</td><td><span class="sdot green"></span>3/3</td><td class="mini">storage · repl factor 2</td></tr>
+        <tr><td>acme-postgres</td><td>StatefulSet</td><td><span class="sdot green"></span>1/1</td><td class="mini">TimescaleDB</td></tr>
+        <tr><td>acme-mongo</td><td>StatefulSet</td><td><span class="sdot green"></span>1/1</td><td class="mini">metadata</td></tr>
+        <tr><td>acme-redis</td><td>Deployment</td><td><span class="sdot green"></span>1/1</td><td class="mini">cache/queue</td></tr>
+        <tr><td>acme-kripfs-db</td><td>Deployment</td><td><span class="sdot green"></span>1/1</td><td class="mini">backup agent</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<h3>4.3 Onboard modal — one click to a new tenant</h3>
+<div class="mock">
+  <div class="bar"><span class="dot3"><i></i><i></i><i></i></span> console.koneksi.co.kr — Onboard</div>
+  <div class="modal">
+    <div class="sheet">
+      <div class="h" style="margin-bottom:2px">Onboard a new tenant</div>
+      <div class="mini">Creates an isolated DatArk stack in a new namespace.</div>
+      <div class="field"><label>Client name</label><input value="globex" readonly></div>
+      <div class="mini" style="margin:-4px 0 4px">→ namespace <code>tenant-globex</code> · URL <code>globex.koneksi.co.kr</code></div>
+      <div class="field"><label>Tier</label>
+        <div class="tiers">
+          <div class="tc"><b>Free</b><div class="sp">1 kipfs · 2Gi</div></div>
+          <div class="tc"><b>Starter</b><div class="sp">1 kipfs · 10Gi</div></div>
+          <div class="tc sel"><b>Pro ✓</b><div class="sp">3 kipfs · 50Gi</div></div>
+          <div class="tc"><b>Enterprise</b><div class="sp">5 kipfs · 200Gi</div></div>
+        </div>
+      </div>
+      <button class="btn" style="width:100%;margin-top:6px">Provision tenant →</button>
+      <div style="margin-top:12px">
+        <div class="wf"><span class="stepn">✓</span> namespace + secrets (Vault)</div>
+        <div class="wf"><span class="stepn">✓</span> deploy stack (helm)</div>
+        <div class="wf"><span class="stepn p">3</span> wait for pods ready…</div>
+        <div class="wf"><span class="stepn p">4</span> verify + expose endpoint</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ IMPLEMENTATION ============ -->
+<h2>5. Implementation plan (phases)</h2>
+<div class="phase"><div class="pn">1</div><div><b>Read-only dashboard</b> — Console API with a read-scoped ServiceAccount; list <code>tenant-*</code> namespaces, pod/workload status, and ingress hosts. Frontend dashboard + tenant detail. <span class="mini">(Highest value, lowest risk — pure read.)</span></div></div>
+<div class="phase"><div class="pn">2</div><div><b>Onboard action</b> — add the provisioner Job (Option A): package <code>bin/</code>+chart as an image, API creates the Job with Vault/NCR/TLS secrets mounted, streams logs to the modal.</div></div>
+<div class="phase"><div class="pn">3</div><div><b>Manage actions</b> — upgrade tier (re-run provision) and deprovision (run teardown). Guardrails: confirm dialogs, and the storage-is-one-way rule from the wiring doc.</div></div>
+<div class="phase"><div class="pn">4</div><div><b>Auth + polish</b> — OIDC login, RBAC per ops role, audit log of who onboarded/deprovisioned, live pod status via websockets/watch.</div></div>
+
+<h2>6. Security &amp; RBAC</h2>
+<ul>
+  <li><b>Least privilege:</b> the API ServiceAccount gets a ClusterRole to <code>get/list/watch</code> namespaces, pods, deployments, statefulsets, services, ingresses — read-only for monitoring. A separate, narrower Role grants create/delete for provisioning (namespaces + the provisioner Job).</li>
+  <li><b>No kube creds in the browser</b> — the SPA only ever calls the Console API.</li>
+  <li><b>Secrets stay server-side</b> — the UI shows status/endpoints, never secret values. Provisioning secrets (Vault token, NCR, TLS) are mounted only into the provisioner Job, not the API.</li>
+  <li><b>Auth-gate the console</b> — internal ops tool; must sit behind login before it can onboard/deprovision.</li>
+  <li><b>Audit</b> — log every onboard/upgrade/deprovision with the user + params.</li>
+</ul>
+
+<h2>7. Open decisions (your call)</h2>
+<table>
+  <tr><th>#</th><th>Decision</th><th>My default</th></tr>
+  <tr><td>D1</td><td>Provisioning trigger</td><td>In-cluster Job (Option A); GH Actions as fallback</td></tr>
+  <tr><td>D2</td><td>API language</td><td>Node.js (<code>@kubernetes/client-node</code>) — fast to build; Go if you prefer one binary</td></tr>
+  <tr><td>D3</td><td>Auth method</td><td>OIDC (Google Workspace / GitHub org) — or gateway basic-auth for a quick internal start</td></tr>
+  <tr><td>D4</td><td>Scope of v1</td><td>Phase 1 only (read-only monitoring) first, ship, then add Onboard</td></tr>
+  <tr><td>D5</td><td>Multi-cluster?</td><td>Single cluster (datark-cluster) for now; design the API so a cluster selector can be added later</td></tr>
+</table>
+
+<div class="foot" style="margin-top:34px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;">
+  DatArk Console — plan v0.1 · SPA + in-cluster API (RBAC-scoped) · monitor tenant namespaces + endpoints · one-click onboard via in-cluster provisioner Job · reuses the existing Helm chart + provisioning scripts.
+</div>
+
+</div>
+</body>
+</html>

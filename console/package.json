@@ -1,0 +1,12 @@
+{
+  "name": "datark-console",
+  "version": "0.1.0",
+  "private": true,
+  "description": "DatArk ops console — monitor tenant namespaces + endpoints, onboard tenants.",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "dependencies": {
+    "@kubernetes/client-node": "^0.21.0",
+    "express": "^4.19.2"
+  }
+}

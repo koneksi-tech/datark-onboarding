@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DatArk — Component Wiring & Connectivity</title>
+<style>
+  :root{--bg:#f6f8fa;--card:#fff;--ink:#1f2328;--muted:#57606a;--line:#d0d7de;--accent:#1f6feb;--accent2:#8250df;--ok:#1a7f37;--warn:#9a6700;--danger:#cf222e;--chip:#eaeef2;--code:#f0f3f6;}
+  @media (prefers-color-scheme:dark){:root{--bg:#0d1117;--card:#161b22;--ink:#e6edf3;--muted:#8b949e;--line:#30363d;--accent:#58a6ff;--accent2:#bc8cff;--ok:#3fb950;--warn:#d29922;--danger:#f85149;--chip:#21262d;--code:#0b0f14;}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:1020px;margin:0 auto;padding:32px 20px 80px;}
+  header.top{border-bottom:2px solid var(--line);padding-bottom:18px;margin-bottom:22px;}
+  h1{font-size:24px;margin:0 0 6px;} h2{font-size:19px;margin:34px 0 10px;padding-top:10px;border-top:1px solid var(--line);}
+  h3{font-size:15px;margin:18px 0 6px;}
+  .sub{color:var(--muted);font-size:14px;}
+  code{background:var(--code);padding:1px 5px;border-radius:5px;font:12px ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-word;}
+  table{border-collapse:collapse;width:100%;margin:9px 0;font-size:12.8px;display:block;overflow-x:auto;}
+  th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top;}
+  th{background:var(--chip);font-weight:600;white-space:nowrap;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin:12px 0;}
+  .muted{color:var(--muted);}
+  .b{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:20px;}
+  .cfg{background:rgba(31,111,235,.14);color:var(--accent);} .sec{background:rgba(207,34,46,.14);color:var(--danger);} .vlt{background:rgba(130,80,223,.16);color:var(--accent2);} .dns{background:rgba(26,127,55,.15);color:var(--ok);}
+  /* diagram */
+  .diag{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin:14px 0;overflow-x:auto;}
+  .ns{border:2px solid var(--accent2);border-radius:12px;padding:16px;min-width:640px;position:relative;}
+  .ns::before{content:"namespace tenant-<client>";position:absolute;top:-10px;left:16px;background:var(--card);padding:0 8px;font-size:11px;font-weight:700;color:var(--accent2);}
+  .comp{display:inline-block;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 11px;font-size:12.5px;font-weight:600;margin:3px;}
+  .comp.pub{border-color:var(--accent);background:rgba(31,111,235,.08);}
+  .comp.ext{border-color:var(--accent2);background:rgba(130,80,223,.06);}
+  .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0;}
+  .conn{font-size:11px;color:var(--muted);font-family:ui-monospace,monospace;}
+  .arw{color:var(--muted);font-weight:700;}
+  /* SVG architecture diagram */
+  .svgwrap{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;margin:14px 0;overflow-x:auto;}
+  svg.arch{width:100%;min-width:820px;height:auto;display:block}
+  svg.arch .box{fill:var(--bg);stroke:var(--line);stroke-width:1.5;}
+  svg.arch .pub{fill:rgba(31,111,235,.10);stroke:var(--accent);stroke-width:2;}
+  svg.arch .store{fill:rgba(26,127,55,.06);stroke:var(--ok);}
+  svg.arch .ext{fill:rgba(130,80,223,.07);stroke:var(--accent2);}
+  svg.arch .pod{fill:var(--card);stroke:var(--accent2);stroke-width:1.2;}
+  svg.arch .ns{fill:none;stroke:var(--accent2);stroke-width:1.5;stroke-dasharray:5 4;}
+  svg.arch .title{fill:var(--ink);font:700 13px -apple-system,Segoe UI,sans-serif;}
+  svg.arch .subt{fill:var(--muted);font:10px ui-monospace,monospace;}
+  svg.arch .nslbl{fill:var(--accent2);font:700 10px -apple-system,sans-serif;}
+  svg.arch .connl{stroke:var(--muted);stroke-width:1.6;fill:none;}
+  svg.arch .sec{stroke:var(--danger);stroke-width:1.6;fill:none;}
+  svg.arch .peer{stroke:var(--accent2);stroke-width:1.6;fill:none;}
+  svg.arch .elbl{fill:var(--ink);font:700 9.5px ui-monospace,monospace;}
+  svg.arch .elbls{fill:var(--danger);font:700 9.5px ui-monospace,monospace;}
+  svg.arch .elblbg{fill:var(--card);opacity:.85}
+  .leg{display:flex;gap:18px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin-top:8px}
+  .leg i{display:inline-block;width:22px;height:0;border-top-width:2px;border-top-style:solid;vertical-align:middle;margin-right:5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <span class="b cfg" style="font-size:11px">ARCHITECTURE</span>
+  <h1>DatArk — Component Wiring &amp; Connectivity</h1>
+  <p class="sub">How every component connects to the others via environment variables, where each value comes from, and the upgrade/downgrade rules. Per tenant, on the Kubernetes cluster. 2026-07-15.</p>
+</header>
+
+<div class="card">
+  <b>Legend — where each env value comes from</b>
+  <div style="margin-top:6px">
+    <span class="b dns">DNS</span> in-namespace service address (non-secret) &nbsp;
+    <span class="b cfg">CFG</span> ConfigMap (non-secret) &nbsp;
+    <span class="b sec">SECRET</span> K8s Secret (materialized from Vault) &nbsp;
+    <span class="b vlt">VAULT</span> Vault (source of truth / runtime transit)
+  </div>
+  <p class="muted" style="margin:8px 0 0">Rule of thumb: <b>addresses come from ConfigMap/DNS, credentials come from the Secret (which came from Vault).</b> Every component reads its wiring from env — nothing is hard-coded.</p>
+</div>
+
+<!-- ============ DIAGRAM ============ -->
+<h2>1. Connectivity map</h2>
+<div class="svgwrap">
+<svg class="arch" viewBox="0 0 880 600" role="img" aria-label="DatArk component wiring diagram">
+  <defs>
+    <marker id="a" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--muted)"/></marker>
+    <marker id="as" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--danger)"/></marker>
+    <marker id="ap" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--accent2)"/></marker>
+  </defs>
+
+  <!-- external client -->
+  <rect class="box" x="345" y="8" width="180" height="36" rx="8"/>
+  <text class="title" x="435" y="30" text-anchor="middle">👤 Client / app</text>
+  <line class="connl" x1="435" y1="44" x2="435" y2="84" marker-end="url(#a)"/>
+  <text class="subt" x="442" y="66">HTTPS · &lt;client&gt;.koneksi.co.kr</text>
+
+  <!-- namespace boundary -->
+  <rect class="ns" x="16" y="72" width="662" height="508" rx="14"/>
+  <text class="nslbl" x="30" y="88">namespace  tenant-&lt;client&gt;</text>
+
+  <!-- backend (public) -->
+  <rect class="pub" x="300" y="96" width="270" height="50" rx="9"/>
+  <text class="title" x="435" y="118" text-anchor="middle">backend  ·  API</text>
+  <text class="subt" x="435" y="134" text-anchor="middle">PUBLIC (ingress + TLS) · :3000</text>
+
+  <!-- Vault (shared, external, right) -->
+  <rect class="ext" x="722" y="98" width="146" height="48" rx="9"/>
+  <text class="title" x="795" y="120" text-anchor="middle">🔐 Vault</text>
+  <text class="subt" x="795" y="135" text-anchor="middle">shared · transit</text>
+  <path class="sec" d="M570,116 H722" marker-end="url(#as)"/>
+  <text class="elbls" x="578" y="110">VAULT_ROLE_ID / SECRET_ID</text>
+
+  <!-- kipfs cluster -->
+  <rect class="box" x="42" y="196" width="176" height="120" rx="10"/>
+  <text class="title" x="130" y="214" text-anchor="middle">kipfs  ·  storage</text>
+  <rect class="pod" x="58" y="226" width="144" height="20" rx="5"/><text class="subt" x="130" y="240" text-anchor="middle">pod-0</text>
+  <rect class="pod" x="58" y="252" width="144" height="20" rx="5"/><text class="subt" x="130" y="266" text-anchor="middle">pod-1 … (1/3/5)</text>
+  <rect class="pod" x="58" y="278" width="144" height="20" rx="5"/><text class="subt" x="130" y="292" text-anchor="middle">pod-N</text>
+  <path class="peer" d="M48,236 q-14,30 0,60" marker-end="url(#ap)"/>
+  <text class="elbl" x="8" y="270" fill="var(--accent2)">peer</text>
+
+  <!-- datastores -->
+  <rect class="store" x="248" y="222" width="104" height="48" rx="9"/>
+  <text class="title" x="300" y="244" text-anchor="middle">redis</text><text class="subt" x="300" y="259" text-anchor="middle">:6379</text>
+  <rect class="store" x="372" y="222" width="112" height="48" rx="9"/>
+  <text class="title" x="428" y="244" text-anchor="middle">mongodb</text><text class="subt" x="428" y="259" text-anchor="middle">:27017</text>
+  <rect class="store" x="504" y="222" width="150" height="48" rx="9"/>
+  <text class="title" x="579" y="242" text-anchor="middle">postgres</text><text class="subt" x="579" y="257" text-anchor="middle">TimescaleDB :5432</text>
+
+  <!-- backend → stores -->
+  <path class="sec"   d="M360,146 C280,175 190,180 150,196" marker-end="url(#as)"/>
+  <text class="elbls" x="150" y="182" text-anchor="middle">IPFS_NODE_URL + bearer</text>
+  <path class="sec"   d="M405,146 C360,175 320,200 300,222" marker-end="url(#as)"/>
+  <text class="elbls" x="238" y="205">REDIS_* + pass</text>
+  <path class="connl" d="M435,146 L430,222" marker-end="url(#a)"/>
+  <text class="elbl"  x="440" y="196">MONGO_CONN_STRING</text>
+  <path class="sec"   d="M500,146 C560,172 570,196 579,222" marker-end="url(#as)"/>
+  <text class="elbls" x="560" y="192">POSTGRES_* + pass</text>
+
+  <!-- kripfs-db -->
+  <rect class="box" x="250" y="432" width="190" height="50" rx="9"/>
+  <text class="title" x="345" y="454" text-anchor="middle">kripfs-db  ·  backup</text>
+  <text class="subt" x="345" y="470" text-anchor="middle">pg_basebackup → kipfs</text>
+  <path class="sec" d="M258,432 C180,400 140,360 130,316" marker-end="url(#as)"/>
+  <text class="elbls" x="96" y="392">KRIPFSDB_KIPFS_TOKEN</text>
+  <path class="sec" d="M440,452 C540,430 575,320 579,270" marker-end="url(#as)"/>
+  <text class="elbls" x="470" y="420">KRIPFSDB_DB_PASSWORD</text>
+
+  <!-- external infra -->
+  <rect class="ext" x="722" y="300" width="146" height="42" rx="9"/>
+  <text class="title" x="795" y="320" text-anchor="middle">📦 NCR registry</text><text class="subt" x="795" y="334" text-anchor="middle">image pulls</text>
+  <rect class="ext" x="722" y="352" width="146" height="42" rx="9"/>
+  <text class="title" x="795" y="372" text-anchor="middle">💾 Cinder</text><text class="subt" x="795" y="386" text-anchor="middle">per-tenant PVCs</text>
+</svg>
+</div>
+<div class="leg">
+  <span><i style="border-color:var(--danger)"></i> carries a credential (Secret)</span>
+  <span><i style="border-color:var(--muted)"></i> address only (ConfigMap/DNS)</span>
+  <span><i style="border-color:var(--accent2)"></i> kipfs peer mesh</span>
+</div>
+
+<!-- ============ PER-COMPONENT ============ -->
+<h2>2. Per-component env wiring</h2>
+
+<h3>2.1 backend — talks to everything</h3>
+<table>
+  <tr><th>Connects to</th><th>Env var(s)</th><th>Value</th><th>Source</th></tr>
+  <tr><td>kipfs</td><td><code>IPFS_NODE_URL</code> / <code>IPFS_DOWNLOAD_URL</code></td><td><code>http://&lt;id&gt;-kripfs.&lt;ns&gt;.svc.cluster.local:8080</code></td><td><span class="b dns">DNS</span></td></tr>
+  <tr><td>kipfs (auth)</td><td><code>IPFS_AUTHORIZATION</code></td><td>bearer — <b>= kipfs koneksi_static_bearer</b></td><td><span class="b sec">SECRET</span></td></tr>
+  <tr><td>redis</td><td><code>REDIS_HOST</code> / <code>REDIS_PORT</code></td><td><code>&lt;id&gt;-redis.&lt;ns&gt;.svc:6379</code></td><td><span class="b dns">DNS</span>/<span class="b cfg">CFG</span></td></tr>
+  <tr><td>redis (auth)</td><td><code>REDIS_PASSWORD</code></td><td>per-tenant</td><td><span class="b sec">SECRET</span></td></tr>
+  <tr><td>mongodb</td><td><code>MONGO_CONNECTION_STRING</code></td><td><code>mongodb://root:&lt;pw&gt;@&lt;id&gt;-mongo.&lt;ns&gt;.svc:27017/koneksi?authSource=admin</code></td><td><span class="b sec">SECRET</span>+<span class="b dns">DNS</span></td></tr>
+  <tr><td>postgres</td><td><code>POSTGRES_HOST</code>/<code>PORT</code>/<code>USER</code>/<code>DB</code></td><td><code>&lt;id&gt;-postgres.&lt;ns&gt;.svc</code> / 5432 / postgres / koneksi</td><td><span class="b dns">DNS</span>/<span class="b cfg">CFG</span></td></tr>
+  <tr><td>postgres (auth)</td><td><code>POSTGRES_PASSWORD</code></td><td>per-tenant</td><td><span class="b sec">SECRET</span></td></tr>
+  <tr><td>Vault (address)</td><td><code>VAULT_ADDR</code></td><td>shared Vault node (this env)</td><td><span class="b cfg">CFG</span></td></tr>
+  <tr><td>Vault (auth)</td><td><code>VAULT_ROLE_ID</code> / <code>VAULT_SECRET_ID</code></td><td>per-tenant AppRole → login for transit</td><td><span class="b sec">SECRET</span> (<span class="b vlt">VAULT</span>)</td></tr>
+  <tr><td>Vault (encryption)</td><td><code>VAULT_TRANSIT_KEY</code></td><td><code>datark-&lt;id&gt;</code> (per-tenant key)</td><td><span class="b cfg">CFG</span>/<span class="b vlt">VAULT</span></td></tr>
+</table>
+
+<h3>2.2 kipfs — talks to its peer pods</h3>
+<table>
+  <tr><th>Connects to</th><th>config.json field</th><th>Value</th><th>Source</th></tr>
+  <tr><td>other kipfs pods</td><td><code>cluster_peers</code></td><td>headless DNS of every other ordinal (auto-generated)</td><td><span class="b dns">DNS</span> (initContainer)</td></tr>
+  <tr><td>peer trust</td><td><code>cluster_secret</code></td><td>same on all pods</td><td><span class="b sec">SECRET</span></td></tr>
+  <tr><td>API auth</td><td><code>koneksi_static_bearer</code></td><td><b>= backend IPFS_AUTHORIZATION</b></td><td><span class="b sec">SECRET</span></td></tr>
+</table>
+
+<h3>2.3 kripfs-db — backs a DB up to kipfs</h3>
+<table>
+  <tr><th>Connects to</th><th>Env / config</th><th>Value</th><th>Source</th></tr>
+  <tr><td>kipfs (target store)</td><td>config <code>kipfs.url</code></td><td><code>http://&lt;id&gt;-kripfs.&lt;ns&gt;.svc:8080</code></td><td><span class="b dns">DNS</span></td></tr>
+  <tr><td>kipfs (auth)</td><td><code>KRIPFSDB_KIPFS_TOKEN</code></td><td><b>= KIPFS_STATIC_BEARER</b> (same tenant bearer)</td><td><span class="b sec">SECRET</span></td></tr>
+  <tr><td>postgres (source)</td><td>config <code>database.host</code></td><td><code>&lt;id&gt;-postgres.&lt;ns&gt;.svc:5432</code></td><td><span class="b dns">DNS</span></td></tr>
+  <tr><td>postgres (auth)</td><td><code>KRIPFSDB_DB_PASSWORD</code></td><td><b>= POSTGRES_PASSWORD</b> (same tenant pw)</td><td><span class="b sec">SECRET</span></td></tr>
+</table>
+
+<h3>2.4 datastores — accept connections</h3>
+<table>
+  <tr><th>Component</th><th>Env it consumes</th><th>Must equal</th></tr>
+  <tr><td>redis</td><td><code>--requirepass $REDIS_PASSWORD</code></td><td>backend <code>REDIS_PASSWORD</code></td></tr>
+  <tr><td>mongodb</td><td><code>MONGO_INITDB_ROOT_PASSWORD</code></td><td>password inside backend <code>MONGO_CONNECTION_STRING</code></td></tr>
+  <tr><td>postgres</td><td><code>POSTGRES_PASSWORD</code></td><td>backend <code>POSTGRES_PASSWORD</code> <b>and</b> kripfs-db <code>KRIPFSDB_DB_PASSWORD</code></td></tr>
+</table>
+
+<!-- ============ CONTRACTS ============ -->
+<h2>3. The matching-value contracts (or the tenant breaks)</h2>
+<div class="card">
+  <p>Because a few values must be <b>identical</b> across components, they all come from the <b>same per-tenant Vault path</b> (<code>secret/datark/tenants/&lt;id&gt;</code>) and are written to both keys — so they can never drift:</p>
+  <table>
+    <tr><th>Vault value</th><th>Used as</th><th>By</th></tr>
+    <tr><td><code>kripfs_static_bearer</code></td><td><code>koneksi_static_bearer</code> · <code>IPFS_AUTHORIZATION</code> · <code>KRIPFSDB_KIPFS_TOKEN</code></td><td>kipfs · backend · kripfs-db</td></tr>
+    <tr><td><code>postgres_pass</code></td><td><code>POSTGRES_PASSWORD</code> · <code>KRIPFSDB_DB_PASSWORD</code></td><td>postgres · backend · kripfs-db</td></tr>
+    <tr><td><code>mongo_pass</code></td><td><code>MONGO_INITDB_ROOT_PASSWORD</code> · in <code>MONGO_CONNECTION_STRING</code></td><td>mongodb · backend</td></tr>
+    <tr><td><code>redis_pass</code></td><td><code>requirepass</code> · <code>REDIS_PASSWORD</code></td><td>redis · backend</td></tr>
+    <tr><td><code>kripfs_cluster_secret</code></td><td><code>cluster_secret</code></td><td>all kipfs pods</td></tr>
+  </table>
+  <p class="muted">If any pair diverged: backend↔kipfs → 401 on every upload; backend/kripfs-db↔DB → auth failure; kipfs peers → cluster won't trust each other.</p>
+</div>
+
+<!-- ============ UPGRADE/DOWNGRADE ============ -->
+<h2>4. Upgrade &amp; downgrade rules</h2>
+<p class="muted">Tiers scale kripfs node count, replication, and storage. What can change later — and in which direction:</p>
+<table>
+  <tr><th>Attribute</th><th>Upgrade (↑)</th><th>Downgrade (↓)</th><th>Notes</th></tr>
+  <tr><td><b>CPU / memory</b> per pod</td><td>✅</td><td>✅</td><td>Free both ways — change limits/requests and re-apply</td></tr>
+  <tr><td><b>Namespace quota</b></td><td>✅</td><td>✅</td><td>Both ways</td></tr>
+  <tr><td><b>kripfs node count</b> (1↔3↔5)</td><td>✅</td><td>⚠️ risky</td><td>Scale up adds pods. New uploads replicate; <b>existing pins are not auto-copied</b> to new pods (still readable via peering; a <b>repin</b> creates physical replicas). Scaling <b>down</b> needs a repin onto surviving nodes first or you lose replicas; removed pods leave orphaned PVCs.</td></tr>
+  <tr><td><b>Storage size</b> (kripfs/mongo/postgres disk)</td><td>⚠️ manual</td><td>❌ <b>never</b></td><td>Block volumes only <b>grow</b>. Growing = a manual PVC-expand (a StatefulSet template change errors — immutable). <b>Shrinking is impossible in place</b> — only via data migration to a new smaller volume.</td></tr>
+</table>
+<div class="card" style="border-left:4px solid var(--warn);background:rgba(154,103,0,.06);">
+  <b>Key takeaway:</b> treat <b>tier storage as a floor you can raise but not lower.</b> Compute and node count are flexible; <b>disk is a one-way commitment.</b> The provisioning automation supports <b>upgrades only</b>; downgrades (and storage growth) are manual operations, not a tier flip. Size lower tiers conservatively when pricing.
+</div>
+
+<div class="foot" style="margin-top:34px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;">
+  DatArk component wiring · addresses from ConfigMap/DNS, credentials from Secret (← Vault) · matching values come from one per-tenant Vault path so they never drift · storage upgrades are one-way.
+</div>
+
+</div>
+</body>
+</html>
