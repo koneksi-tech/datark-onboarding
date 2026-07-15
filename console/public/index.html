@@ -55,7 +55,7 @@
 <script>
 const $ = h => { const d=document.createElement('div'); d.innerHTML=h.trim(); return d.firstChild; };
 const root = document.getElementById('root');
-let view = 'dashboard', currentTenant = null, timer = null;
+let view = 'dashboard', currentTenant = null, timer = null, modalOpen = false;
 
 function dot(s){return s==='healthy'||s==='Ready'?'green':s==='degraded'?'amber':s==='unknown'?'gray':'red';}
 async function api(p,opt){ const r=await fetch(p,opt); if(r.status===401) throw {auth:true}; return r.json(); }
@@ -117,18 +117,20 @@ window.openOnboard = () => {
       <button class="btn" id="ogo" style="flex:1;background:var(--accent)">Provision tenant →</button>
       <button class="back" id="ox">Cancel</button>
     </div></div></div>`);
-  root.appendChild(m);
+  modalOpen=true; document.body.appendChild(m);
+  const close=()=>{ modalOpen=false; m.remove(); };
   const oc=m.querySelector('#oc');
   m.querySelectorAll('.tc').forEach(el=>el.onclick=()=>{m.querySelectorAll('.tc').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');tier=el.dataset.t;});
   oc.oninput=()=>{ m.querySelector('#oh').textContent = oc.value?`→ namespace tenant-${oc.value} · https://${oc.value}.koneksi.co.kr`:''; };
-  m.querySelector('#ox').onclick=()=>m.remove();
+  m.querySelector('#ox').onclick=close;
   m.querySelector('#ogo').onclick=async()=>{
     m.querySelector('#oe').textContent='';
     const client=oc.value.trim();
+    const btn=m.querySelector('#ogo'); btn.disabled=true; btn.textContent='Provisioning…';
     const r=await fetch('/api/tenants',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({client,tier})});
     const d=await r.json().catch(()=>({}));
-    if(r.ok){ m.remove(); alert(d.message||'Provisioning started.'); setTimeout(render,4000); }
-    else m.querySelector('#oe').textContent=d.error||('failed ('+r.status+')');
+    if(r.ok){ close(); alert(d.message||'Provisioning started.'); setTimeout(render,4000); }
+    else { m.querySelector('#oe').textContent=d.error||('failed ('+r.status+')'); btn.disabled=false; btn.textContent='Provision tenant →'; }
   };
   oc.focus();
 };
@@ -178,7 +180,7 @@ async function renderCluster(){
 async function start(){
   view='dashboard'; render();
   if(timer)clearInterval(timer);
-  timer=setInterval(()=>{ if(view!=='tenant') render(); }, 10000);
+  timer=setInterval(()=>{ if(view!=='tenant' && !modalOpen) render(); }, 10000);
 }
 (async()=>{ try{ await api('/api/me'); start(); }catch(e){ renderLogin(); } })();
 </script>
