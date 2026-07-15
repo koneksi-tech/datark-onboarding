@@ -60,7 +60,7 @@
 <header class="top">
   <span class="b cfg" style="font-size:11px">ARCHITECTURE</span>
   <h1>DatArk — Component Wiring &amp; Connectivity</h1>
-  <p class="sub">How every component connects to the others via environment variables, where each value comes from, and the upgrade/downgrade rules. Per tenant, on the Kubernetes cluster. 2026-07-15.</p>
+  <p class="sub">How every component connects to the others via environment variables, where each value comes from, and the upgrade/downgrade rules. Per tenant, on the Kubernetes cluster. 2026-07-16.</p>
 </header>
 
 <div class="card">
@@ -110,7 +110,7 @@
   <rect class="box" x="42" y="196" width="176" height="120" rx="10"/>
   <text class="title" x="130" y="214" text-anchor="middle">kipfs  ·  storage</text>
   <rect class="pod" x="58" y="226" width="144" height="20" rx="5"/><text class="subt" x="130" y="240" text-anchor="middle">pod-0</text>
-  <rect class="pod" x="58" y="252" width="144" height="20" rx="5"/><text class="subt" x="130" y="266" text-anchor="middle">pod-1 … (1/3/5)</text>
+  <rect class="pod" x="58" y="252" width="144" height="20" rx="5"/><text class="subt" x="130" y="266" text-anchor="middle">pod-1 … (1/2/3/5)</text>
   <rect class="pod" x="58" y="278" width="144" height="20" rx="5"/><text class="subt" x="130" y="292" text-anchor="middle">pod-N</text>
   <path class="peer" d="M48,236 q-14,30 0,60" marker-end="url(#ap)"/>
   <text class="elbl" x="8" y="270" fill="var(--accent2)">peer</text>
@@ -215,16 +215,18 @@
 
 <!-- ============ UPGRADE/DOWNGRADE ============ -->
 <h2>4. Upgrade &amp; downgrade rules</h2>
-<p class="muted">Tiers scale kripfs node count, replication, and storage. What can change later — and in which direction:</p>
+<p class="muted">An upgrade is a <b>one-click tier flip</b> in the console — it dispatches the provisioning pipeline with the higher tier and only ever grows <b>kripfs</b>. Databases are deliberately fixed so the upgrade never touches an immutable volume. What changes, and in which direction:</p>
 <table>
-  <tr><th>Attribute</th><th>Upgrade (↑)</th><th>Downgrade (↓)</th><th>Notes</th></tr>
-  <tr><td><b>CPU / memory</b> per pod</td><td>✅</td><td>✅</td><td>Free both ways — change limits/requests and re-apply</td></tr>
-  <tr><td><b>Namespace quota</b></td><td>✅</td><td>✅</td><td>Both ways</td></tr>
-  <tr><td><b>kripfs node count</b> (1↔3↔5)</td><td>✅</td><td>⚠️ risky</td><td>Scale up adds pods. New uploads replicate; <b>existing pins are not auto-copied</b> to new pods (still readable via peering; a <b>repin</b> creates physical replicas). Scaling <b>down</b> needs a repin onto surviving nodes first or you lose replicas; removed pods leave orphaned PVCs.</td></tr>
-  <tr><td><b>Storage size</b> (kripfs/mongo/postgres disk)</td><td>⚠️ manual</td><td>❌ <b>never</b></td><td>Block volumes only <b>grow</b>. Growing = a manual PVC-expand (a StatefulSet template change errors — immutable). <b>Shrinking is impossible in place</b> — only via data migration to a new smaller volume.</td></tr>
+  <tr><th>Attribute</th><th>free → starter → pro → enterprise</th><th>Upgrade (↑)</th><th>Downgrade (↓)</th><th>How</th></tr>
+  <tr><td><b>kripfs node count</b></td><td>1 → 2 → 3 → 5 pods</td><td>✅ automated</td><td>❌ not supported</td><td>Scale up adds StatefulSet pods; each gets a fresh volume and peers into the CRDT cluster, replicating existing CIDs per the replication factor. <b>Existing pods and their volumes are untouched.</b></td></tr>
+  <tr><td><b>kripfs replication factor</b></td><td>1 → 1 → 2 → 3</td><td>✅ automated</td><td>❌</td><td>Config change, applied on the rolling update. Higher tiers keep more physical copies of each CID.</td></tr>
+  <tr><td><b>kripfs storage</b> (per pod)</td><td>20 → 50 → 100 → 250&nbsp;Gi</td><td>✅ automated (grow&nbsp;in&nbsp;place)</td><td>❌ <b>never</b></td><td><b>Online Cinder volume expansion</b>, no data movement: the pipeline raises the storage quota, orphan-deletes the STS (pods + PVCs stay bound — <b>no downtime</b>), patches each PVC to the new size, then helm recreates the STS at the matching size. Block volumes can only grow, so downgrade is impossible in place.</td></tr>
+  <tr><td><b>kripfs CPU / memory</b></td><td>scales up per tier</td><td>✅</td><td>✅</td><td>Pod template field — a normal rolling update (brief kripfs restart; data on the PV is preserved).</td></tr>
+  <tr><td><b>Namespace quota</b></td><td>scales up per tier</td><td>✅ automated</td><td>⚠️</td><td>Raised automatically before expansion. Lowering is blocked if current usage exceeds the new limit.</td></tr>
+  <tr><td><b>mongo / postgres storage</b></td><td><b>20&nbsp;Gi — fixed, all tiers</b></td><td>—</td><td>—</td><td><b>Never changes.</b> Pinning DB disk to one size across every tier is exactly what keeps <code>helm upgrade</code> off the immutable-volume path — that failure is why upgrades broke before.</td></tr>
 </table>
-<div class="card" style="border-left:4px solid var(--warn);background:rgba(154,103,0,.06);">
-  <b>Key takeaway:</b> treat <b>tier storage as a floor you can raise but not lower.</b> Compute and node count are flexible; <b>disk is a one-way commitment.</b> The provisioning automation supports <b>upgrades only</b>; downgrades (and storage growth) are manual operations, not a tier flip. Size lower tiers conservatively when pricing.
+<div class="card" style="border-left:4px solid var(--ok);background:rgba(20,120,70,.06);">
+  <b>Key takeaway:</b> <b>upgrades are fully automated and data-safe</b> — kripfs grows on both axes (more pods + bigger disks, in place) while the databases hold a fixed 20&nbsp;Gi. The only immutable thing in Kubernetes is a StatefulSet's volume size, so we grow those volumes out-of-band (online expansion) and never resize the DB volumes at all. <b>Downgrade is intentionally one-way / unsupported:</b> block storage can't shrink and removing kripfs peers can drop the last replica of a CID. Price accordingly — a tier is a floor you can raise, not lower.
 </div>
 
 <div class="foot" style="margin-top:34px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;">

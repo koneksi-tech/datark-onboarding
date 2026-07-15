@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DatArk Onboarding — Full Documentation</title>
+<style>
+  :root{--bg:#f6f8fa;--card:#fff;--ink:#1f2328;--muted:#57606a;--line:#d0d7de;--accent:#1f6feb;--accent2:#8250df;--ok:#1a7f37;--warn:#9a6700;--err:#cf222e;--chip:#eaeef2;--code:#f0f3f6;}
+  @media (prefers-color-scheme:dark){:root{--bg:#0d1117;--card:#161b22;--ink:#e6edf3;--muted:#8b949e;--line:#30363d;--accent:#58a6ff;--accent2:#bc8cff;--ok:#3fb950;--warn:#d29922;--err:#f85149;--chip:#21262d;--code:#0b0f14;}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:1060px;margin:0 auto;padding:32px 20px 90px;}
+  header.top{border-bottom:2px solid var(--line);padding-bottom:18px;margin-bottom:10px;}
+  h1{font-size:25px;margin:0 0 6px;}
+  h2{font-size:19px;margin:38px 0 10px;padding-top:12px;border-top:1px solid var(--line);}
+  h3{font-size:15.5px;margin:22px 0 6px;}
+  .sub{color:var(--muted);font-size:14px;}
+  code{background:var(--code);padding:1px 5px;border-radius:5px;font:12px ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-word;}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:11px 13px;overflow-x:auto;font:12px/1.5 ui-monospace,monospace;}
+  table{border-collapse:collapse;width:100%;margin:9px 0;font-size:12.8px;display:block;overflow-x:auto;}
+  th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top;}
+  th{background:var(--chip);font-weight:600;white-space:nowrap;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin:12px 0;}
+  .b{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;}
+  .ok{background:rgba(26,127,55,.15);color:var(--ok);} .int{background:rgba(130,80,223,.16);color:var(--accent2);} .pub{background:rgba(31,111,235,.14);color:var(--accent);} .warnb{background:rgba(154,103,0,.15);color:var(--warn);}
+  .muted{color:var(--muted);} ul{margin:6px 0 6px 2px;padding-left:20px;} li{margin:3px 0;}
+  .toc{columns:2;font-size:13px;margin:14px 0 0;}
+  .toc a{color:var(--accent);text-decoration:none;display:block;padding:2px 0;}
+  .note{border-left:4px solid var(--accent);background:rgba(31,111,235,.06);border-radius:0 8px 8px 0;padding:10px 14px;margin:12px 0;}
+  .good{border-left:4px solid var(--ok);background:rgba(26,127,55,.06);}
+  .warn{border-left:4px solid var(--warn);background:rgba(154,103,0,.06);}
+  .kbd{font:11.5px ui-monospace,monospace;background:var(--code);border:1px solid var(--line);padding:1px 6px;border-radius:5px;}
+  /* architecture diagram */
+  .arch{margin:16px 0;}
+  .arch .client{max-width:340px;margin:0 auto;text-align:center;background:var(--card);border:1px solid var(--line);border-radius:9px;padding:9px 12px;font-size:12.5px;}
+  .arch .down{text-align:center;color:var(--muted);font-size:12px;margin:4px 0;}
+  .arch .down .lbl{font:11.5px ui-monospace,monospace;background:var(--code);padding:1px 6px;border-radius:5px;}
+  .arch .cluster{border:2px solid var(--accent);border-radius:14px;padding:20px 16px 16px;position:relative;margin-top:12px;}
+  .arch .cluster::before{content:"KUBERNETES · datark-cluster (NHN NKS)";position:absolute;top:-10px;left:18px;background:var(--bg);padding:0 8px;font-size:11px;font-weight:700;letter-spacing:.03em;color:var(--accent);}
+  .arch .shared{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;}
+  .arch .sbox{flex:1;min-width:150px;background:rgba(31,111,235,.07);border:1px solid var(--accent);border-radius:8px;padding:8px 11px;}
+  .arch .sbox b{display:block;font-size:12px;} .arch .sbox span{font:11px ui-monospace,monospace;color:var(--muted);}
+  .arch .tenants{display:flex;gap:14px;flex-wrap:wrap;}
+  .arch .ns{flex:1;min-width:280px;background:var(--bg);border:1.5px solid var(--accent2);border-radius:11px;padding:12px;position:relative;}
+  .arch .ns::before{content:"namespace tenant-<client>";position:absolute;top:-9px;left:12px;background:var(--bg);padding:0 6px;font-size:10px;font-weight:700;color:var(--accent2);}
+  .arch .ns h4{margin:2px 0 9px;font-size:13px;color:var(--accent2);}
+  .arch .pubrow{background:rgba(31,111,235,.12);border:1px solid var(--accent);border-radius:8px;padding:8px 10px;font-size:12.5px;margin-bottom:9px;display:flex;justify-content:space-between;align-items:center;gap:6px;}
+  .arch .tag{font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:10px;}
+  .arch .tag.pub{background:var(--accent);color:#fff;} .arch .tag.int{background:var(--accent2);color:#fff;}
+  .arch .intgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+  .arch .svc{background:var(--card);border:1px solid var(--line);border-radius:7px;padding:6px 9px;font-size:11.5px;}
+  .arch .svc .t{font-weight:600;} .arch .svc .d{color:var(--muted);font-size:10px;}
+  .arch .conn{font-size:10.5px;color:var(--muted);text-align:center;margin:6px 0 3px;}
+  .arch .legend{margin-top:14px;font-size:11.5px;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap;}
+  .foot{margin-top:40px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <span class="b pub">FULL DOCUMENTATION</span> <span class="b ok">VALIDATED END-TO-END</span>
+  <h1>DatArk Marketplace Onboarding — Full Documentation</h1>
+  <p class="sub">One-click provisioning of an isolated, per-tenant DatArk stack on a shared Kubernetes cluster + shared Vault. Consolidated reference: purpose, architecture, specs, tiers &amp; upgrades, wiring, provisioning, admin handover, reliability, and the ops console. As of 2026-07-16.</p>
+  <div class="toc">
+    <a href="#overview">1. Overview &amp; purpose</a>
+    <a href="#why">2. Why Kubernetes (not a single image)</a>
+    <a href="#arch">3. Architecture</a>
+    <a href="#prereq">4. Shared prerequisites (one-time)</a>
+    <a href="#images">5. Container images</a>
+    <a href="#components">6. Per-tenant components</a>
+    <a href="#tiers">7. Tiers &amp; the upgrade model</a>
+    <a href="#wiring">8. Component wiring &amp; contracts</a>
+    <a href="#vault">9. Vault model</a>
+    <a href="#provision">10. Provisioning — how to onboard</a>
+    <a href="#handover">11. Admin &amp; developer handover</a>
+    <a href="#reliability">12. Reliability — bugs fixed &amp; guardrails</a>
+    <a href="#console">13. Ops console</a>
+    <a href="#status">14. Status &amp; outstanding items</a>
+  </div>
+</header>
+
+<h2 id="overview">1. Overview &amp; purpose</h2>
+<p>DatArk is sold in a marketplace. When a client subscribes, clicking <b>Onboard</b> must provision a complete, <b>fully isolated</b> DatArk stack for that client — with no manual ops. Each tenant gets its own decentralized storage (kripfs), application backend, datastores (MongoDB, PostgreSQL, Redis), and a database-backup daemon (kripfs-db) — all in a dedicated Kubernetes namespace, sized by subscription tier.</p>
+<p>The two things you provide once are a <b>Kubernetes cluster</b> and a <b>Vault cluster</b>. Everything per-tenant — namespace, secrets, TLS, DNS routing, encryption keys, the admin account — is generated automatically by the provisioning pipeline.</p>
+<div class="note good"><b>Current state:</b> the full pipeline is built and <b>validated end-to-end</b> — a freshly provisioned tenant round-trips a file upload &amp; download through the backend→kripfs path byte-for-byte, with zero manual fixes. An ops console at <code>console.koneksi.co.kr</code> onboards, monitors, upgrades, and tears down tenants.</p></div>
+
+<h2 id="why">2. Why Kubernetes, not a single image</h2>
+<p>The intuitive expectation is "one Docker image = one click." It cannot be a single image because a tenant is <b>six cooperating services</b> with independent lifecycles, storage, and scaling:</p>
+<ul>
+  <li><b>Stateful, independently-scaled parts.</b> kripfs is a clustered storage system that scales from 1 to 5 peered nodes with per-node persistent volumes; the databases each need their own durable volume. A single container can't hold multiple independently-scaled StatefulSets with separate disks.</li>
+  <li><b>Isolation is a hard requirement.</b> Each client's data, credentials, and encryption keys must be separated. Kubernetes namespaces + NetworkPolicies + per-tenant Vault paths give real isolation on shared hardware; a single image on a shared host does not.</li>
+  <li><b>Independent failure &amp; upgrade.</b> Restarting the backend must not restart storage; growing storage must not touch the databases. Separate workloads make this safe.</li>
+</ul>
+<p>Kubernetes is the efficient fit: one shared cluster runs many tenants at high density, the same Helm chart renders every tenant, and "1-click" is delivered by <b>automation on top of</b> Kubernetes (a console button → pipeline → Helm), not by collapsing the product into one container.</p>
+
+<h2 id="arch">3. Architecture</h2>
+<p class="muted">A shared Kubernetes cluster + a shared Vault. Each client gets a fully isolated stack in its own namespace <code>tenant-&lt;client&gt;</code>. Only the backend is public; kripfs and the datastores are internal ClusterIP only.</p>
+<div class="arch">
+  <div class="client"><b>👤 Client / developer's web UI</b></div>
+  <div class="down">│&nbsp; <span class="lbl">https://&lt;client&gt;.koneksi.co.kr</span> &nbsp;▼</div>
+  <div class="cluster">
+    <div class="shared">
+      <div class="sbox"><b>🌐 ingress-nginx + LB</b><span>133.186.214.160 · *.koneksi.co.kr TLS</span></div>
+      <div class="sbox"><b>🔐 Vault (shared)</b><span>125.6.39.130:8200 · transit/approle/kv</span></div>
+      <div class="sbox"><b>📦 NCR registry</b><span>…nhncloud.com/koneksi-tech</span></div>
+      <div class="sbox"><b>💾 StorageClass</b><span>nhn-block-ssd (Cinder, expandable)</span></div>
+    </div>
+    <div class="tenants">
+      <div class="ns">
+        <h4>tenant-A</h4>
+        <div class="pubrow"><span><b>backend</b> · API</span><span class="tag pub">PUBLIC ▲ ingress</span></div>
+        <div class="conn">backend ──► internal services ▼ &nbsp;·&nbsp; backend ──► Vault (transit datakey)</div>
+        <div class="intgrid">
+          <div class="svc"><span class="t">kripfs</span> <span class="tag int">INT</span><div class="d">storage · 1–5 nodes · :8080</div></div>
+          <div class="svc"><span class="t">postgres</span> <span class="tag int">INT</span><div class="d">TimescaleDB · :5432</div></div>
+          <div class="svc"><span class="t">mongodb</span> <span class="tag int">INT</span><div class="d">users/metadata · :27017</div></div>
+          <div class="svc"><span class="t">redis</span> <span class="tag int">INT</span><div class="d">cache/session · :6379</div></div>
+          <div class="svc"><span class="t">kripfs-db</span> <span class="tag int">INT</span><div class="d">DB backup daemon</div></div>
+        </div>
+        <div class="conn" style="margin-top:8px">+ Secret · ConfigMap · NetworkPolicy · ResourceQuota · admin user</div>
+      </div>
+      <div class="ns">
+        <h4>tenant-B</h4>
+        <div class="pubrow"><span><b>backend</b> · API</span><span class="tag pub">PUBLIC ▲ ingress</span></div>
+        <div class="conn">…same shape, fully isolated…</div>
+        <div class="intgrid">
+          <div class="svc"><span class="t">kripfs</span> <span class="tag int">INT</span><div class="d">own bearer + peers</div></div>
+          <div class="svc"><span class="t">postgres</span> <span class="tag int">INT</span><div class="d">own password</div></div>
+          <div class="svc"><span class="t">mongodb</span> <span class="tag int">INT</span><div class="d">own password</div></div>
+          <div class="svc"><span class="t">redis</span> <span class="tag int">INT</span><div class="d">own password</div></div>
+          <div class="svc"><span class="t">kripfs-db</span> <span class="tag int">INT</span><div class="d">own backup</div></div>
+        </div>
+        <div class="conn" style="margin-top:8px">own Vault path + transit key + AppRole</div>
+      </div>
+    </div>
+    <div class="legend">
+      <span><span class="tag pub">PUBLIC</span> reachable at the client subdomain (HTTPS)</span>
+      <span><span class="tag int">INT</span> internal ClusterIP only — never public</span>
+    </div>
+  </div>
+</div>
+
+<h2 id="prereq">4. Shared prerequisites (one-time)</h2>
+<h3>4.1 Kubernetes cluster</h3>
+<table>
+  <tr><th>Item</th><th>Value</th></tr>
+  <tr><td>Provider / type</td><td>NHN Cloud NKS (managed Kubernetes)</td></tr>
+  <tr><td>Cluster</td><td><code>datark-cluster</code> · Kubernetes v1.34.3 · Ubuntu 24.04</td></tr>
+  <tr><td>Worker nodes</td><td>4 × (16 vCPU / 32 GB RAM)</td></tr>
+  <tr><td>StorageClass (default)</td><td><code>nhn-block-ssd</code> — <code>cinder.csi.openstack.org</code>, WaitForFirstConsumer, <b>allowVolumeExpansion=true</b> (required for tier upgrades)</td></tr>
+  <tr><td>Ingress</td><td>ingress-nginx; IngressClass <code>nginx</code></td></tr>
+  <tr><td>LoadBalancer (public)</td><td><code>133.186.214.160</code> — DNS target for all tenant hosts + the console</td></tr>
+</table>
+<h3>4.2 Vault (shared, dedicated to this environment — NOT prod koneksi Vault)</h3>
+<table>
+  <tr><th>Item</th><th>Value</th></tr>
+  <tr><td>Address</td><td><code>http://125.6.39.130:8200</code></td></tr>
+  <tr><td>Engines</td><td><code>transit</code> · <code>approle</code> · <code>kv-v2</code> at <code>secret/</code></td></tr>
+  <tr><td>Provisioner auth</td><td>token with policy <code>datark-provisioner</code> (GitHub secret <code>VAULT_TOKEN</code>)</td></tr>
+  <tr><td>Ports</td><td>8200 (API) · 8201 (Raft, node-to-node)</td></tr>
+</table>
+<h3>4.3 Registry · TLS · DNS</h3>
+<table>
+  <tr><th>Item</th><th>Value</th></tr>
+  <tr><td>Registry (NCR)</td><td><code>36163004-kr1-registry.container.nhncloud.com</code> (project <code>koneksi-tech</code>); pull secret <code>ncr-regcred</code> per namespace (GitHub secret <code>NCR_DOCKERCONFIG</code>)</td></tr>
+  <tr><td>TLS</td><td><code>*.koneksi.co.kr</code> wildcard (GitHub secrets <code>TLS_FULLCHAIN</code> + <code>TLS_KEY</code>) — synced into each tenant namespace</td></tr>
+  <tr><td>DNS</td><td>wildcard <code>*.koneksi.co.kr → 133.186.214.160</code> — new tenants resolve immediately, no per-tenant DNS</td></tr>
+</table>
+
+<h2 id="images">5. Container images</h2>
+<table>
+  <tr><th>Component</th><th>Image</th><th>Source</th></tr>
+  <tr><td><b>kripfs</b></td><td><code>…/koneksi-tech/kipfs:v0.0.1</code></td><td>NCR — kripfs repo workflow <code>kipfs-image-nhn.yml</code> on <code>vX.X.X</code> tags (branch <code>nhn-main</code>)</td></tr>
+  <tr><td><b>backend</b></td><td><code>…/koneksi-tech/koneksi-backend:v0.0.2</code></td><td>NCR (koneksi-tech)</td></tr>
+  <tr><td><b>kripfs-db</b></td><td><code>…/koneksi-tech/kripfs-db:v0.0.3</code></td><td>NCR — kripfs-db repo workflow (DB→kipfs backup daemon)</td></tr>
+  <tr><td><b>redis</b></td><td><code>redis:7-alpine</code></td><td>Docker Hub</td></tr>
+  <tr><td><b>mongodb</b></td><td><code>mongo:7</code></td><td>Docker Hub</td></tr>
+  <tr><td><b>postgres</b></td><td><code>timescale/timescaledb:2.17.2-pg16</code></td><td>Docker Hub — TimescaleDB required by the backend</td></tr>
+</table>
+
+<h2 id="components">6. Per-tenant components</h2>
+<table>
+  <tr><th>Component</th><th>Workload</th><th>Port(s)</th><th>Storage</th><th>Exposure</th><th>Role</th></tr>
+  <tr><td><b>backend</b></td><td>Deployment</td><td>3000→80→443</td><td>—</td><td><span class="b pub">PUBLIC</span></td><td>Application API (the only public surface). initContainer waits for datastores.</td></tr>
+  <tr><td><b>kripfs</b></td><td>StatefulSet + headless + ClusterIP</td><td>8080 / 4001 / 5001</td><td>per-pod PVC (tier)</td><td><span class="b int">INTERNAL</span></td><td>Decentralized storage; 1–5 peered nodes; bearer-authenticated.</td></tr>
+  <tr><td><b>mongodb</b></td><td>StatefulSet</td><td>27017</td><td>20Gi (fixed)</td><td><span class="b int">INTERNAL</span></td><td>Users, sessions pointer, metadata.</td></tr>
+  <tr><td><b>postgres</b></td><td>StatefulSet</td><td>5432</td><td>20Gi (fixed)</td><td><span class="b int">INTERNAL</span></td><td>TimescaleDB (<code>shared_preload_libraries=timescaledb</code>); provenance/metrics.</td></tr>
+  <tr><td><b>redis</b></td><td>Deployment</td><td>6379</td><td>ephemeral</td><td><span class="b int">INTERNAL</span></td><td>Cache + session store (<code>--requirepass</code>). Session validation depends on it.</td></tr>
+  <tr><td><b>kripfs-db</b></td><td>Deployment (1 pod, all tiers)</td><td>—</td><td>—</td><td><span class="b int">INTERNAL</span></td><td>Backs a tenant DB up to the tenant's own kipfs.</td></tr>
+</table>
+<p class="muted">Every namespace also gets: a <b>Secret</b> (materialized from Vault), a <b>ConfigMap</b> (non-secret env), a <b>NetworkPolicy</b> (default-deny + same-namespace + ingress), a <b>ResourceQuota</b> (tier-sized), the <b>ncr-regcred</b> pull secret, the wildcard <b>TLS</b> secret, and a bootstrapped <b>admin user</b>.</p>
+
+<h2 id="tiers">7. Tiers &amp; the upgrade model</h2>
+<p>Subscription tier scales <b>kripfs on both axes</b> (node count + per-node storage) plus compute and namespace quota. The databases are deliberately a <b>fixed size across every tier</b> — this is what makes upgrades safe (see below).</p>
+<table>
+  <tr><th>Tier</th><th>kripfs nodes</th><th>Repl. factor</th><th>kripfs res (req→lim)</th><th>kripfs disk / pod</th><th>mongo disk</th><th>pg disk</th><th>Quota (CPU / Mem / Storage)</th></tr>
+  <tr><td>free</td><td>1</td><td>1</td><td>100m/256Mi → 250m/512Mi</td><td>20Gi</td><td>20Gi</td><td>20Gi</td><td>3 / 5Gi / 80Gi</td></tr>
+  <tr><td>starter</td><td>2</td><td>1</td><td>250m/512Mi → 500m/1Gi</td><td>50Gi</td><td>20Gi</td><td>20Gi</td><td>4 / 8Gi / 160Gi</td></tr>
+  <tr><td>pro</td><td>3</td><td>2</td><td>500m/1Gi → 1/2Gi</td><td>100Gi</td><td>20Gi</td><td>20Gi</td><td>8 / 12Gi / 380Gi</td></tr>
+  <tr><td>enterprise</td><td>5</td><td>3</td><td>1/2Gi → 2/4Gi</td><td>250Gi</td><td>20Gi</td><td>20Gi</td><td>16 / 28Gi / 1350Gi</td></tr>
+</table>
+<p class="muted">backend / redis / kripfs-db compute is fixed across tiers. Specs are the recommended minimums and are fully customizable per client.</p>
+
+<h3>7.1 Upgrade &amp; downgrade rules</h3>
+<p>An upgrade is a <b>one-click tier flip</b> (console) that re-runs the pipeline at the higher tier and only ever grows kripfs. Kubernetes forbids resizing a StatefulSet's volume via Helm, so kripfs storage is grown out-of-band via <b>online Cinder volume expansion</b>; the databases never change size, keeping the upgrade off the immutable-volume path.</p>
+<table>
+  <tr><th>Attribute</th><th>free→starter→pro→enterprise</th><th>Upgrade ↑</th><th>Downgrade ↓</th><th>How</th></tr>
+  <tr><td><b>kripfs node count</b></td><td>1→2→3→5</td><td>✅ automated</td><td>❌ not supported</td><td>Scale up adds pods; each gets a fresh volume and peers in, replicating existing CIDs. Existing pods/volumes untouched.</td></tr>
+  <tr><td><b>kripfs replication factor</b></td><td>1→1→2→3</td><td>✅ automated</td><td>❌</td><td>Config, applied on the rolling update — more physical copies per CID.</td></tr>
+  <tr><td><b>kripfs storage / pod</b></td><td>20→50→100→250Gi</td><td>✅ automated (grow-in-place)</td><td>❌ never</td><td>Pipeline raises the quota, orphan-deletes the STS (pods/PVCs stay bound — no downtime), online-expands the PVCs, then Helm recreates the STS at the new size.</td></tr>
+  <tr><td><b>kripfs CPU / memory</b></td><td>scales per tier</td><td>✅</td><td>✅</td><td>Pod template — rolling update; data on the PV is preserved.</td></tr>
+  <tr><td><b>Namespace quota</b></td><td>scales per tier</td><td>✅ automated</td><td>⚠️</td><td>Raised before expansion. Lowering blocked if usage exceeds the new limit.</td></tr>
+  <tr><td><b>mongo / postgres storage</b></td><td><b>20Gi — fixed, all tiers</b></td><td>—</td><td>—</td><td><b>Never changes</b> — this is what keeps <code>helm upgrade</code> off the immutable-volume path.</td></tr>
+</table>
+<div class="note good"><b>Data safety:</b> capacity grows by <i>adding pods</i> and by <i>expanding volumes in place</i> — the underlying physical disks are preserved. <b>Downgrade is intentionally one-way / unsupported:</b> block storage can't shrink and removing kripfs peers can drop a CID's last replica. Verified: <code>free→pro</code> grew kripfs 1→3 nodes and 20→100Gi on the same volume, databases untouched.</div>
+
+<h2 id="wiring">8. Component wiring &amp; the matching-value contracts</h2>
+<p>Addresses come from the ConfigMap / in-namespace DNS; credentials from the Secret (materialized from Vault). Several values <b>must match exactly across components</b> or the tenant silently breaks — these are now generated from a single Vault source and verified at provision time.</p>
+<table>
+  <tr><th>Contract</th><th>Where it must line up</th><th>Rule</th></tr>
+  <tr><td><b>kripfs bearer</b></td><td>Vault <code>kripfs_static_bearer</code> = kripfs config <code>koneksi_static_bearer</code> = kripfs-db token</td><td>Same raw token everywhere.</td></tr>
+  <tr><td><b>backend → kripfs Authorization</b></td><td>Secret <code>IPFS_AUTHORIZATION</code></td><td><b>Must be <code>Bearer &lt;token&gt;</code></b> (with prefix) — the backend sends it verbatim and kripfs does <code>strip_prefix("Bearer ")</code>. <code>KIPFS_STATIC_BEARER</code> stays the raw token.</td></tr>
+  <tr><td><b>cluster secret</b></td><td>Vault <code>kripfs_cluster_secret</code> → every kripfs peer</td><td>Peers with a different cluster secret can't join.</td></tr>
+  <tr><td><b>Vault transit</b></td><td>backend <code>VAULT_TRANSIT_KEY</code> = <code>datark-&lt;client&gt;</code>; policy grants <code>datakey/plaintext</code> + encrypt + decrypt</td><td>Backend uses <b>envelope encryption</b> (datakey) for profile PII — the policy must grant <code>datakey/plaintext</code> or registration 403s.</td></tr>
+  <tr><td><b>DB credentials</b></td><td>Secret passwords = what mongo/redis/postgres boot with</td><td>All sourced from the same per-tenant Vault path.</td></tr>
+</table>
+<p class="muted">Non-secret env (ConfigMap): <code>IPFS_NODE_URL</code>/<code>IPFS_DOWNLOAD_URL</code>, <code>MONGO/REDIS/POSTGRES</code> hosts, <code>VAULT_ADDR</code>/<code>VAULT_TRANSIT_*</code>, <code>WEB_APP_URL</code>. Secret env: <code>APP_KEY</code>, <code>JWT_SECRET</code>, <code>IPFS_AUTHORIZATION</code>, <code>KIPFS_*</code>, DB passwords, <code>VAULT_ROLE_ID/SECRET_ID</code>, shared platform keys (Spaces/PortOne/Postmark/Provenance), and <code>ADMIN_EMAIL</code>/<code>ADMIN_PASSWORD</code>.</p>
+
+<h2 id="vault">9. Vault model (per tenant)</h2>
+<table>
+  <tr><th>Object</th><th>Path / name</th><th>Contents / purpose</th></tr>
+  <tr><td>Per-tenant KV</td><td><code>secret/datark/tenants/&lt;client&gt;</code></td><td>kripfs_cluster_secret, kripfs_static_bearer, mongo_pass, redis_pass, postgres_pass, app_key, jwt_secret, <b>admin_email</b>, <b>admin_password</b> — all generate-once</td></tr>
+  <tr><td>Shared platform KV</td><td><code>secret/datark/shared</code></td><td>SPACES_*, POSTMARK_*, PORTONE_*, PROVENANCE_* (same for all tenants)</td></tr>
+  <tr><td>Transit key</td><td><code>transit/keys/datark-&lt;client&gt;</code></td><td>per-tenant PII encryption (envelope / datakey)</td></tr>
+  <tr><td>Policy</td><td><code>datark-tenant-&lt;client&gt;</code></td><td>read own KV + shared; <code>transit/datakey/plaintext</code> + <code>encrypt</code> + <code>decrypt</code> on own key</td></tr>
+  <tr><td>AppRole</td><td><code>auth/approle/role/datark-&lt;client&gt;</code></td><td>backend runtime auth → role_id + secret_id</td></tr>
+</table>
+
+<h2 id="provision">10. Provisioning — how to onboard</h2>
+<h3>10.1 Three ways to trigger</h3>
+<ul>
+  <li><b>Ops console</b> (primary): open <code>console.koneksi.co.kr</code> → <b>+ Onboard Tenant</b> → enter client name + tier → confirm. The console dispatches the pipeline.</li>
+  <li><b>GitHub Actions</b>: workflow <code>provision-tenant.yml</code> → Run workflow → client name + tier.</li>
+  <li><b>Script</b> (operator): <code>./bin/datark-provision.sh --tenant &lt;name&gt; --tier &lt;free|starter|pro|enterprise&gt;</code></li>
+</ul>
+<h3>10.2 What the automation does (idempotent, with rollback on a failed fresh create)</h3>
+<ol>
+  <li>Create namespace <code>tenant-&lt;client&gt;</code>; label it with tenant + tier; create the <code>ncr-regcred</code> pull secret.</li>
+  <li>Sync the wildcard TLS secret into the namespace (Ingress needs it namespaced).</li>
+  <li>Vault: create the transit key, generate-once KV secrets (incl. admin creds), write the policy (with <code>datakey/plaintext</code>), create the AppRole.</li>
+  <li>Materialize the Kubernetes Secret from Vault (incl. the <code>Bearer</code>-prefixed <code>IPFS_AUTHORIZATION</code>).</li>
+  <li><b>Contract guardrail</b> — fail loudly if the Vault policy lacks <code>datakey</code> or <code>IPFS_AUTHORIZATION</code> lacks the <code>Bearer</code> prefix.</li>
+  <li>(Upgrade only) grow kripfs storage via online PVC expansion.</li>
+  <li><code>helm upgrade --install</code> the <code>datark-tenant</code> chart with the tier values.</li>
+  <li>Seed the tenant admin (register via API → promote in Mongo).</li>
+  <li>Emit a JSON summary (URL, admin email, Vault refs).</li>
+</ol>
+<h3>10.3 Teardown</h3>
+<p>Delete the namespace (console <b>Destroy</b> or <code>kubectl delete ns tenant-&lt;client&gt;</code>) — removes all workloads, PVCs, and secrets. Vault objects are retained by default (the transit key is kept so retained ciphertext stays decryptable; set <code>DELETE_TRANSIT=true</code> to crypto-shred).</p>
+
+<h2 id="handover">11. Admin &amp; developer handover</h2>
+<p>The backend gates new end-user signups behind <b>admin approval + email verification</b> but seeds no admin. So provisioning now <b>bootstraps one admin per tenant automatically</b>: it generates <code>admin@&lt;client&gt;.koneksi.co.kr</code> + a strong password (generate-once in Vault), registers it via the API, then promotes it in Mongo (approve + verify + assign the <code>system_admin</code> role).</p>
+<div class="note"><b>Per-tenant handover to the developer</b> is exactly two things:
+<ul>
+  <li><b>API base URL</b> — <code>https://&lt;client&gt;.koneksi.co.kr</code> (the same API the Koneksi web app already targets; integrate the web UI against it).</li>
+  <li><b>Admin login</b> — <code>admin@&lt;client&gt;.koneksi.co.kr</code> + password (shown in the console tenant detail, and stored at <code>secret/datark/tenants/&lt;client&gt;</code> key <code>admin_password</code>). The developer uses it to approve their own end-users.</li>
+</ul>
+The developer never touches Vault, kripfs, or the bearer — those are internal and automated.</div>
+<p class="muted"><b>API surface:</b> end-user flow — <code>POST /users/register</code> → admin approves → <code>POST /tokens/request</code> (email+password → JWT) → <code>POST /files/upload</code> / <code>GET /files/:id/download</code>. Programmatic flow — <code>/clients/v1/…</code> with an API key (scopes <code>user_file:upload</code>/<code>download</code>). Admin flow — <code>/admin/*</code> (e.g. <code>GET /admin/users/list</code>).</p>
+
+<h2 id="reliability">12. Reliability — bugs fixed &amp; guardrails</h2>
+<p>Validating the full upload/download path surfaced three provisioning bugs that would have broken every tenant. All are fixed, and a guardrail prevents the first two from silently regressing.</p>
+<table>
+  <tr><th>#</th><th>Bug</th><th>Symptom</th><th>Fix</th></tr>
+  <tr><td>1</td><td>Vault policy missing <code>datakey/plaintext</code></td><td>register <span class="b warnb">403</span> "failed to create profile" (backend envelope-encrypts PII)</td><td>Added <code>datakey/plaintext</code> to the tenant policy</td></tr>
+  <tr><td>2</td><td><code>IPFS_AUTHORIZATION</code> without <code>Bearer</code> prefix</td><td>upload <span class="b warnb">401</span> "Koneksi auth failed" from kripfs</td><td>Set it to <code>Bearer &lt;token&gt;</code></td></tr>
+  <tr><td>3</td><td>Backend boots before its datastores (startup race)</td><td>"Session revoked: logged in from another device" → uploads blocked (Redis disabled at startup)</td><td><code>wait-for-datastores</code> initContainer on the backend</td></tr>
+</table>
+<div class="note good"><b>Guardrail:</b> <code>assert_tenant_contract</code> fails provisioning loudly if the Vault datakey grant or the <code>Bearer</code> prefix ever regress. <b>Validated clean-room:</b> destroy + fresh provision + register/login/upload/download round-trips byte-for-byte with zero manual fixes.</div>
+<p class="warn note"><b>Note:</b> tenants provisioned before these fixes need a re-provision (idempotent) to be repaired.</p>
+
+<h2 id="console">13. Ops console</h2>
+<p>A management UI at <code>https://console.koneksi.co.kr</code> (namespace <code>console-ui</code> on the datark cluster; image <code>onboarding-console</code>, tag-triggered by <code>vX.X.X-console</code>). It uses a read-scoped in-cluster ServiceAccount and dispatches the provisioning workflow via a GitHub token.</p>
+<table>
+  <tr><th>View</th><th>What it does</th></tr>
+  <tr><td>Login</td><td>Simple session login (<code>superadmin</code>).</td></tr>
+  <tr><td>Dashboard</td><td>Summary KPIs — tenant counts, health, nodes ready, tenants by plan.</td></tr>
+  <tr><td>Tenants</td><td>List of all tenants — tier, health, pods, endpoint; <b>Destroy</b>; <b>+ Onboard Tenant</b> (name + tier → pipeline).</td></tr>
+  <tr><td>Tenant detail</td><td>Endpoint, <b>kripfs bearer</b> (masked, reveal/copy), <b>admin login</b> (email + masked password, reveal/copy), workload readiness, and <b>⬆ Upgrade plan</b> (one-way tier flip).</td></tr>
+  <tr><td>Cluster</td><td>Node list — status, CPU, memory, Kubernetes/OS version.</td></tr>
+</table>
+
+<h2 id="status">14. Status &amp; outstanding items</h2>
+<table>
+  <tr><th>Area</th><th>Status</th></tr>
+  <tr><td>Shared prerequisites (cluster, Vault, registry, TLS, DNS)</td><td><span class="b ok">READY</span></td></tr>
+  <tr><td>Per-tenant provisioning (all 6 components)</td><td><span class="b ok">WORKING</span></td></tr>
+  <tr><td>Upload / download via backend → kripfs</td><td><span class="b ok">VALIDATED</span> byte-for-byte on a fresh tenant</td></tr>
+  <tr><td>Tier upgrade (data-safe, online expansion)</td><td><span class="b ok">WORKING</span> free→pro verified</td></tr>
+  <tr><td>Per-tenant admin auto-seed + developer handover</td><td><span class="b ok">WORKING</span></td></tr>
+  <tr><td>Ops console (onboard / monitor / upgrade / destroy)</td><td><span class="b ok">LIVE</span> console.koneksi.co.kr</td></tr>
+  <tr><td>Provisioning guardrails</td><td><span class="b ok">IN PLACE</span></td></tr>
+  <tr><td>kripfs-db → kipfs upload timeout</td><td><span class="b warnb">DEV-TEAM</span> flagged; DB-backup daemon</td></tr>
+  <tr><td>Own Postmark sender/domain per client</td><td><span class="b warnb">OPTIONAL</span> currently shares platform Postmark; customizable</td></tr>
+  <tr><td>Downgrade automation</td><td><span class="b warnb">BY DESIGN</span> upgrade-only; downgrade is a manual op</td></tr>
+</table>
+
+<div class="foot">
+  DatArk Onboarding — full documentation · 2026-07-16 · datark-cluster (NHN NKS) + shared Vault 125.6.39.130 · chart <code>chart/datark-tenant</code> · pipeline <code>bin/datark-provision.sh</code> · console <code>console.koneksi.co.kr</code>. Consolidated from: Assessment, Specifications, Component Wiring, Provisioning Runbook, Console UI Plan, Provisioning Design, and Status.
+</div>
+
+</div>
+</body>
+</html>
