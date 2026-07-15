@@ -7,7 +7,7 @@ secret_sync() {
   ns="$(ns_for "$id")"
   read -r rid sid < <(vault_approle_creds "$id")
 
-  local cluster_secret bearer mongo_pass redis_pass pg_pass app_key jwt mongo_uri
+  local cluster_secret bearer mongo_pass redis_pass pg_pass app_key jwt mongo_uri admin_email admin_pass
   cluster_secret="$(vault_kv_field "$id" kripfs_cluster_secret)"
   bearer="$(vault_kv_field "$id" kripfs_static_bearer)"
   mongo_pass="$(vault_kv_field "$id" mongo_pass)"
@@ -15,6 +15,9 @@ secret_sync() {
   pg_pass="$(vault_kv_field "$id" postgres_pass)"
   app_key="$(vault_kv_field "$id" app_key)"
   jwt="$(vault_kv_field "$id" jwt_secret)"
+  # tenant admin creds — surfaced in the console UI (backend ignores these keys)
+  admin_email="$(vault_kv_field "$id" admin_email 2>/dev/null || true)"
+  admin_pass="$(vault_kv_field "$id" admin_password 2>/dev/null || true)"
 
   # backend connection string -> in-namespace mongo (root/authSource=admin)
   mongo_uri="mongodb://root:${mongo_pass}@${id}-mongo.${ns}.svc.cluster.local:27017/koneksi?authSource=admin"
@@ -36,6 +39,8 @@ secret_sync() {
     --from-literal=JWT_SECRET="$jwt" \
     --from-literal=VAULT_ROLE_ID="$rid" \
     --from-literal=VAULT_SECRET_ID="$sid" \
+    --from-literal=ADMIN_EMAIL="$admin_email" \
+    --from-literal=ADMIN_PASSWORD="$admin_pass" \
     --dry-run=client -o yaml | kc apply -f - >/dev/null
 
   # Merge ALL shared platform secrets (spaces/portone/postmark/provenance) if present.

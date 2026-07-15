@@ -72,6 +72,10 @@ let _bearer='', _bshown=false;
 window.toggleBearer=()=>{ _bshown=!_bshown; const bk=document.getElementById('bk'), be=document.getElementById('beye');
   if(bk) bk.textContent=_bshown?_bearer:'•'.repeat(Math.min(_bearer.length||24,32)); if(be) be.innerHTML=_bshown?EYE:EYEOFF; };
 window.copyBearer=async()=>{ try{ await navigator.clipboard.writeText(_bearer); const c=document.getElementById('bcopy'); if(c){c.textContent='copied';setTimeout(()=>c.textContent='copy',1200);} }catch(e){} };
+let _apass='', _apshown=false;
+window.toggleAdmin=()=>{ _apshown=!_apshown; const pk=document.getElementById('apk'), pe=document.getElementById('apeye');
+  if(pk) pk.textContent=_apshown?_apass:'•'.repeat(Math.min(_apass.length||16,24)); if(pe) pe.innerHTML=_apshown?EYE:EYEOFF; };
+window.copyAdmin=async()=>{ try{ await navigator.clipboard.writeText(_apass); const c=document.getElementById('apcopy'); if(c){c.textContent='copied';setTimeout(()=>c.textContent='copy',1200);} }catch(e){} };
 async function api(p,opt){ const r=await fetch(p,opt); if(r.status===401) throw {auth:true}; return r.json(); }
 
 // ---------- LOGIN ----------
@@ -220,17 +224,29 @@ async function renderTenants(){
 async function renderTenant(){
   const d=await api('/api/tenants/'+currentTenant);
   _bearer=d.bearer||''; _bshown=false;
+  _apass=d.adminPassword||''; _apshown=false;
+  const adminEmail=d.adminEmail||'';
   const rows=(d.workloads||[]).map(w=>`<tr><td><b>${w.name}</b></td><td>${w.kind}</td>
     <td><span class="dot ${w.ok?'green':'amber'}"></span>${w.ready}</td></tr>`).join('');
   const bearerCard = _bearer ? `<div class="ecard"><b>kripfs bearer</b>
     <code id="bk">${'•'.repeat(Math.min(_bearer.length,32))}</code>
     <span class="eye" id="beye" title="Show / hide" onclick="toggleBearer()">${EYEOFF}</span>
     <span class="copy" id="bcopy" onclick="copyBearer()">copy</span></div>` : '';
+  const adminCard = adminEmail ? `<div class="ecard"><b>admin login</b>
+    <span class="muted" style="font-size:11px">— developer approves end-users with this</span>
+    <div style="margin-top:5px"><span class="muted" style="display:inline-block;width:64px">email</span>
+      <code id="aem">${adminEmail}</code>
+      <span class="copy" onclick="navigator.clipboard.writeText(document.getElementById('aem').textContent)">copy</span></div>
+    <div style="margin-top:4px"><span class="muted" style="display:inline-block;width:64px">password</span>
+      <code id="apk">${'•'.repeat(Math.min(_apass.length||16,24))}</code>
+      <span class="eye" id="apeye" title="Show / hide" onclick="toggleAdmin()">${EYEOFF}</span>
+      <span class="copy" id="apcopy" onclick="copyAdmin()">copy</span></div></div>` : '';
   shell(`<button class="back" onclick="go('dashboard')">← Tenants</button>
     <div class="top"><div class="h">${d.name} <span class="tag">${d.tier||'—'}</span> <span class="muted" style="font-size:13px">· ${d.namespace}</span></div>
       <button class="btn" onclick="openUpgrade('${d.name}','${d.tier||''}')">⬆ Upgrade plan</button></div>
     <div class="ecard"><b>Endpoint</b> ${d.endpoint?`<span class="dot green"></span><a class="lnk" href="${d.endpoint}" target="_blank">${d.endpoint}</a>`:'<span class="muted">—</span>'}</div>
     ${bearerCard}
+    ${adminCard}
     <table><thead><tr><th>WORKLOAD</th><th>KIND</th><th>READY</th></tr></thead>
     <tbody>${rows||'<tr><td colspan=3 class=muted>No workloads.</td></tr>'}</tbody></table>`);
 }
