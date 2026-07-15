@@ -50,11 +50,15 @@ vault_provision_tenant() {
     jwt_secret="$jwt" >/dev/null
   ok "kv secrets written to $kvpath (existing values preserved)"
 
-  # policy: read own KV + encrypt/decrypt on own transit key only
+  # policy: read own KV + use own transit key only.
+  # The backend uses envelope encryption: it calls transit/datakey/plaintext/<key>
+  # to mint a per-record data key (see vault_provider.go), then encrypt/decrypt.
+  # datakey is REQUIRED — without it profile PII encryption 403s and registration fails.
   vault policy write "$(vault_policy_name "$id")" - >/dev/null <<EOF
 path "${kvpath}"        { capabilities = ["read"] }
 path "${VAULT_KV_MOUNT}/data/datark/tenants/${id}" { capabilities = ["read"] }
 path "${VAULT_KV_MOUNT}/data/datark/shared"        { capabilities = ["read"] }
+path "${VAULT_TRANSIT_MOUNT}/datakey/plaintext/${tk}" { capabilities = ["update"] }
 path "${VAULT_TRANSIT_MOUNT}/encrypt/${tk}" { capabilities = ["update"] }
 path "${VAULT_TRANSIT_MOUNT}/decrypt/${tk}" { capabilities = ["update"] }
 EOF

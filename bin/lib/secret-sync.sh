@@ -20,11 +20,14 @@ secret_sync() {
   mongo_uri="mongodb://root:${mongo_pass}@${id}-mongo.${ns}.svc.cluster.local:27017/koneksi?authSource=admin"
 
   # Build the Secret. Keys match what the chart + backend expect.
-  #   IPFS_AUTHORIZATION == KIPFS_STATIC_BEARER  (the backend<->kripfs contract)
+  # backend<->kripfs contract: the backend sends IPFS_AUTHORIZATION *verbatim* as the
+  # Authorization header, and kripfs does `strip_prefix("Bearer ")` before comparing to
+  # its koneksi_static_bearer. So IPFS_AUTHORIZATION MUST carry the "Bearer " prefix,
+  # while KIPFS_STATIC_BEARER (kripfs config + kripfs-db) stays the raw token.
   kc create secret generic "${id}-secret" -n "$ns" \
     --from-literal=KIPFS_CLUSTER_SECRET="$cluster_secret" \
     --from-literal=KIPFS_STATIC_BEARER="$bearer" \
-    --from-literal=IPFS_AUTHORIZATION="$bearer" \
+    --from-literal=IPFS_AUTHORIZATION="Bearer $bearer" \
     --from-literal=MONGO_PASSWORD="$mongo_pass" \
     --from-literal=MONGO_CONNECTION_STRING="$mongo_uri" \
     --from-literal=REDIS_PASSWORD="$redis_pass" \
