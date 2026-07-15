@@ -28,7 +28,7 @@ vault_provision_tenant() {
   ok "transit key $tk ready"
 
   # KV secrets — read existing, generate any that are missing
-  local existing cluster_secret bearer mongo_pass redis_pass pg_pass app_key jwt
+  local existing cluster_secret bearer mongo_pass redis_pass pg_pass app_key jwt admin_email admin_pass
   existing="$(vault kv get -format=json "$kvpath" 2>/dev/null || echo '{}')"
   _get() { echo "$existing" | (grep -o "\"$1\"[^,]*" || true) | sed -E 's/.*: *"?([^"]*)"?/\1/' | head -1; }
 
@@ -39,6 +39,10 @@ vault_provision_tenant() {
   pg_pass="$(_get postgres_pass)";                 [[ -n "$pg_pass" ]] || pg_pass="$(gen_secret)"
   app_key="$(_get app_key)";                       [[ -n "$app_key" ]] || app_key="$(gen_secret)"
   jwt="$(_get jwt_secret)";                         [[ -n "$jwt" ]] || jwt="$(gen_secret)"
+  # tenant admin the developer uses to approve end-users (seeded by seed_admin).
+  # Password is generate-once + backend-policy compliant (upper/lower/digit/special).
+  admin_email="$(_get admin_email)";               [[ -n "$admin_email" ]] || admin_email="admin@${id}.${DOMAIN}"
+  admin_pass="$(_get admin_password)";             [[ -n "$admin_pass" ]] || admin_pass="Ad$(openssl rand -hex 10)7!"
 
   vault kv put "$kvpath" \
     kripfs_cluster_secret="$cluster_secret" \
@@ -47,7 +51,9 @@ vault_provision_tenant() {
     redis_pass="$redis_pass" \
     postgres_pass="$pg_pass" \
     app_key="$app_key" \
-    jwt_secret="$jwt" >/dev/null
+    jwt_secret="$jwt" \
+    admin_email="$admin_email" \
+    admin_password="$admin_pass" >/dev/null
   ok "kv secrets written to $kvpath (existing values preserved)"
 
   # policy: read own KV + use own transit key only.

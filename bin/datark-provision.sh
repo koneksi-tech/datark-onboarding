@@ -17,6 +17,7 @@ source "$DIR/lib/vault.sh"
 source "$DIR/lib/secret-sync.sh"
 source "$DIR/lib/tls.sh"
 source "$DIR/lib/verify.sh"
+source "$DIR/lib/seed-admin.sh"
 
 TENANT=""; TIER=""
 while [[ $# -gt 0 ]]; do
@@ -180,6 +181,11 @@ else
 fi
 
 trap - ERR
+
+# 7) bootstrap the tenant admin the developer uses to approve end-users.
+# Non-fatal: a good tenant must not roll back if this hiccups (re-run to retry).
+seed_admin "$TENANT" || warn "admin seed skipped — re-run provisioning to seed it"
+
 echo
 ok "TENANT PROVISIONED"
 cat <<EOF
@@ -188,6 +194,8 @@ cat <<EOF
   "tier": "$TIER",
   "namespace": "$NS",
   "url": "https://${TENANT}.${DOMAIN}",
+  "admin_email": "$(vault_kv_field "$TENANT" admin_email 2>/dev/null || true)",
+  "admin_password_ref": "${VAULT_KV_MOUNT}/datark/tenants/${TENANT} (key: admin_password)",
   "vault_kv": "${VAULT_KV_MOUNT}/datark/tenants/${TENANT}",
   "transit_key": "datark-${TENANT}"
 }
