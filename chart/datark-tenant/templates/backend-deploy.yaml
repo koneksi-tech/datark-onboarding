@@ -26,6 +26,30 @@ spec:
       imagePullSecrets:
         - name: {{ .Values.imagePullSecret }}
       {{- end }}
+      # The backend caches its Redis/Mongo/Postgres connections at startup and does
+      # NOT retry — if it boots before those datastores accept connections (a race on
+      # a fresh provision, since all pods start together) it permanently disables Redis,
+      # which breaks session validation ("logged in from another device"). Block startup
+      # until all three datastores are reachable. `nc -z` against the Service only
+      # succeeds once the backing pod is an active endpoint (Ready), so this also gates
+      # on their readiness.
+      initContainers:
+        - name: wait-for-datastores
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              echo "waiting for mongo/redis/postgres…"
+              until nc -z {{ include "datark.mongo.name" . }} {{ .Values.mongo.port }} \
+                 && nc -z {{ include "datark.redis.name" . }} {{ .Values.redis.port }} \
+                 && nc -z {{ include "datark.postgres.name" . }} {{ .Values.postgres.port }}; do
+                sleep 2
+              done
+              echo "all datastores reachable"
+          resources:
+            requests: { cpu: "10m", memory: "16Mi" }
+            limits:   { cpu: "50m", memory: "32Mi" }
       containers:
         - name: backend
           image: {{ .Values.images.backend | quote }}

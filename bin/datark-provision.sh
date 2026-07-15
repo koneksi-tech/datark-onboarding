@@ -94,6 +94,26 @@ expand_kripfs_pvcs() {
   done
 }
 
+# -----------------------------------------------------------------------------
+# assert_tenant_contract — verify the two things that must be true for a tenant
+# to actually register users + upload to kripfs. Regressions here are silent
+# (pods stay green; failures only surface at runtime), so we check at provision.
+#   1) Vault policy grants transit/datakey/plaintext/<key> — the backend uses
+#      envelope encryption; without it profile PII encryption 403s -> register fails.
+#   2) K8s secret IPFS_AUTHORIZATION carries the "Bearer " prefix — the backend
+#      sends it verbatim and kripfs strip_prefix("Bearer ")es before comparing.
+assert_tenant_contract() {
+  local id="$1" tk pol ipfsauth
+  tk="$(vault_transit_key "$id")"
+  pol="$(vault policy read "$(vault_policy_name "$id")" 2>/dev/null || true)"
+  echo "$pol" | grep -q "${VAULT_TRANSIT_MOUNT}/datakey/plaintext/${tk}" \
+    || die "contract check failed: vault policy '$(vault_policy_name "$id")' lacks datakey/plaintext on ${tk} (registration would 403)"
+  ipfsauth="$(kc -n "$NS" get secret "${id}-secret" -o jsonpath='{.data.IPFS_AUTHORIZATION}' 2>/dev/null | base64 -d 2>/dev/null || true)"
+  [[ "$ipfsauth" == Bearer\ * ]] \
+    || die "contract check failed: secret ${id}-secret IPFS_AUTHORIZATION missing 'Bearer ' prefix (kripfs upload would 401)"
+  ok "tenant contract verified (vault datakey + IPFS_AUTHORIZATION Bearer prefix)"
+}
+
 rollback() {
   warn "provisioning failed — rolling back"
   if $FRESH; then
@@ -123,6 +143,10 @@ vault_provision_tenant "$TENANT"
 
 # 4) materialize the K8s Secret from Vault
 secret_sync "$TENANT"
+
+# 4a) contract guardrails — fail loudly on the two bugs that silently broke
+# registration + upload (see commit 5d07dd1). Cheap, no running pods needed.
+assert_tenant_contract "$TENANT"
 
 # 5) deploy the stack
 # KRIPFS_ENABLED=false lets you provision before the kripfs image is built.
