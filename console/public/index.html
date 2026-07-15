@@ -47,6 +47,9 @@
   .tc{border:1px solid var(--line);border-radius:9px;padding:9px 11px;cursor:pointer}
   .tc.sel{border-color:var(--accent);background:rgba(31,111,235,.08)}
   .tc b{font-size:13px;text-transform:capitalize}.tc .sp{color:var(--muted);font-size:11px}
+  .eye{cursor:pointer;color:var(--muted);vertical-align:middle;margin:0 8px;display:inline-flex}
+  .copy{cursor:pointer;color:var(--accent);font-size:12px;font-weight:600}
+  #bk{font-family:ui-monospace,monospace;font-size:13px}
   .ecard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-bottom:12px}
 </style>
 </head>
@@ -58,6 +61,12 @@ const root = document.getElementById('root');
 let view = 'dashboard', currentTenant = null, timer = null, modalOpen = false;
 
 function dot(s){return s==='healthy'||s==='Ready'?'green':s==='degraded'?'amber':s==='unknown'?'gray':'red';}
+const EYE='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYEOFF='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17.94 17.94A10 10 0 0 1 12 20c-7 0-11-8-11-8a18 18 0 0 1 5.06-5.94M9.9 4.24A9 9 0 0 1 12 4c7 0 11 8 11 8a18 18 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+let _bearer='', _bshown=false;
+window.toggleBearer=()=>{ _bshown=!_bshown; const bk=document.getElementById('bk'), be=document.getElementById('beye');
+  if(bk) bk.textContent=_bshown?_bearer:'•'.repeat(Math.min(_bearer.length||24,32)); if(be) be.innerHTML=_bshown?EYE:EYEOFF; };
+window.copyBearer=async()=>{ try{ await navigator.clipboard.writeText(_bearer); const c=document.getElementById('bcopy'); if(c){c.textContent='copied';setTimeout(()=>c.textContent='copy',1200);} }catch(e){} };
 async function api(p,opt){ const r=await fetch(p,opt); if(r.status===401) throw {auth:true}; return r.json(); }
 
 // ---------- LOGIN ----------
@@ -158,11 +167,17 @@ async function renderDashboard(){
 }
 async function renderTenant(){
   const d=await api('/api/tenants/'+currentTenant);
+  _bearer=d.bearer||''; _bshown=false;
   const rows=(d.workloads||[]).map(w=>`<tr><td><b>${w.name}</b></td><td>${w.kind}</td>
     <td><span class="dot ${w.ok?'green':'amber'}"></span>${w.ready}</td></tr>`).join('');
+  const bearerCard = _bearer ? `<div class="ecard"><b>kripfs bearer</b>
+    <code id="bk">${'•'.repeat(Math.min(_bearer.length,32))}</code>
+    <span class="eye" id="beye" title="Show / hide" onclick="toggleBearer()">${EYEOFF}</span>
+    <span class="copy" id="bcopy" onclick="copyBearer()">copy</span></div>` : '';
   shell(`<button class="back" onclick="go('dashboard')">← Tenants</button>
     <div class="top"><div class="h">${d.name} <span class="muted" style="font-size:13px">· ${d.namespace}</span></div></div>
     <div class="ecard"><b>Endpoint</b> ${d.endpoint?`<span class="dot green"></span><a class="lnk" href="${d.endpoint}" target="_blank">${d.endpoint}</a>`:'<span class="muted">—</span>'}</div>
+    ${bearerCard}
     <table><thead><tr><th>WORKLOAD</th><th>KIND</th><th>READY</th></tr></thead>
     <tbody>${rows||'<tr><td colspan=3 class=muted>No workloads.</td></tr>'}</tbody></table>`);
 }
