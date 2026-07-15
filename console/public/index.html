@@ -39,6 +39,14 @@
   .tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:var(--chip);color:var(--muted)}
   a.lnk{color:var(--accent);text-decoration:none} .muted{color:var(--muted)}
   .del{color:var(--danger);cursor:pointer;font-weight:600;font-size:12px}
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:50}
+  .sheet{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;width:440px;max-width:92%;box-shadow:0 12px 44px rgba(0,0,0,.3)}
+  .sheet label{font-size:12px;font-weight:600;display:block;margin:10px 0 4px}
+  .sheet input{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font-size:14px}
+  .tiers{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .tc{border:1px solid var(--line);border-radius:9px;padding:9px 11px;cursor:pointer}
+  .tc.sel{border-color:var(--accent);background:rgba(31,111,235,.08)}
+  .tc b{font-size:13px;text-transform:capitalize}.tc .sp{color:var(--muted);font-size:11px}
   .ecard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-bottom:12px}
 </style>
 </head>
@@ -94,6 +102,36 @@ window.destroyTenant = async name => {
   if(!r.ok){ const e=await r.json().catch(()=>({})); alert('Destroy failed: '+(e.error||r.status)); return; }
   render();
 };
+window.openOnboard = () => {
+  const tiers=[['free','1 kipfs · 2Gi'],['starter','1 kipfs · 10Gi'],['pro','3 kipfs · 50Gi'],['enterprise','5 kipfs · 200Gi']];
+  let tier='starter';
+  const m=$(`<div class="overlay"><div class="sheet">
+    <div class="h">Onboard a new tenant</div>
+    <div class="muted" style="font-size:12px;margin-bottom:6px">Creates an isolated DatArk stack via the provisioning pipeline (~2 min).</div>
+    <label>Client name</label><input id="oc" placeholder="e.g. globex" autocomplete="off">
+    <div class="muted" id="oh" style="font-size:11px;margin:3px 0;min-height:14px"></div>
+    <label>Plan</label>
+    <div class="tiers" id="ot">${tiers.map((t,i)=>`<div class="tc ${i===1?'sel':''}" data-t="${t[0]}"><b>${t[0]}</b><div class="sp">${t[1]}</div></div>`).join('')}</div>
+    <div class="err" id="oe"></div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn" id="ogo" style="flex:1;background:var(--accent)">Provision tenant →</button>
+      <button class="back" id="ox">Cancel</button>
+    </div></div></div>`);
+  root.appendChild(m);
+  const oc=m.querySelector('#oc');
+  m.querySelectorAll('.tc').forEach(el=>el.onclick=()=>{m.querySelectorAll('.tc').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');tier=el.dataset.t;});
+  oc.oninput=()=>{ m.querySelector('#oh').textContent = oc.value?`→ namespace tenant-${oc.value} · https://${oc.value}.koneksi.co.kr`:''; };
+  m.querySelector('#ox').onclick=()=>m.remove();
+  m.querySelector('#ogo').onclick=async()=>{
+    m.querySelector('#oe').textContent='';
+    const client=oc.value.trim();
+    const r=await fetch('/api/tenants',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({client,tier})});
+    const d=await r.json().catch(()=>({}));
+    if(r.ok){ m.remove(); alert(d.message||'Provisioning started.'); setTimeout(render,4000); }
+    else m.querySelector('#oe').textContent=d.error||('failed ('+r.status+')');
+  };
+  oc.focus();
+};
 
 // ---------- VIEWS ----------
 async function render(){
@@ -111,7 +149,7 @@ async function renderDashboard(){
     <td>${t.endpoint?`<a class="lnk" href="${t.endpoint}" target="_blank" onclick="event.stopPropagation()">${t.endpoint.replace('https://','')} ↗</a>`:'<span class="muted">—</span>'}</td>
     <td><span class="del" onclick="event.stopPropagation();destroyTenant('${t.name}')">🗑 Destroy</span></td>
   </tr>`).join('');
-  shell(`<div class="top"><div class="h">Tenants</div><button class="btn" onclick="alert('Onboard — Phase 2 (provisioner Job)')">＋ Onboard Tenant</button></div>
+  shell(`<div class="top"><div class="h">Tenants</div><button class="btn" onclick="openOnboard()">＋ Onboard Tenant</button></div>
     <table><thead><tr><th>TENANT</th><th>TIER</th><th>STATUS</th><th>PODS</th><th>ENDPOINT</th><th></th></tr></thead>
     <tbody>${rows||'<tr><td colspan=6 class=muted>No tenants.</td></tr>'}</tbody></table>
     <p class="muted" style="font-size:12px;margin-top:8px">Click a tenant to see its components.</p>`);

@@ -21,14 +21,15 @@ on:
         required: true
         type: string
       tier:
-        description: "Subscription tier"
+        description: "Subscription plan"
         required: true
         type: choice
-        default: tier1
+        default: starter
         options:
-          - tier1        # starter
-          - tier2        # pro
-          - tier3        # enterprise
+          - free
+          - starter
+          - pro
+          - enterprise
 
 permissions:
   contents: read
@@ -46,16 +47,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
-
-      - name: Map tier1/2/3 → tier name
-        id: tier
-        run: |
-          case "${{ inputs.tier }}" in
-            tier1) echo "name=starter"    >> "$GITHUB_OUTPUT" ;;
-            tier2) echo "name=pro"        >> "$GITHUB_OUTPUT" ;;
-            tier3) echo "name=enterprise" >> "$GITHUB_OUTPUT" ;;
-            *) echo "unknown tier"; exit 1 ;;
-          esac
 
       - name: Install kubectl, helm, vault
         run: |
@@ -90,12 +81,12 @@ jobs:
       - name: Provision tenant
         run: |
           chmod +x bin/*.sh bin/lib/*.sh
-          ./bin/datark-provision.sh --tenant "${{ inputs.client_name }}" --tier "${{ steps.tier.outputs.name }}"
+          ./bin/datark-provision.sh --tenant "${{ inputs.client_name }}" --tier "${{ inputs.tier }}"
 
       - name: Output
         run: |
           echo "### DatArk tenant provisioned :rocket:" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "- **Client / namespace:** \`tenant-${{ inputs.client_name }}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- **Tier:** ${{ inputs.tier }} (${{ steps.tier.outputs.name }})" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Tier:** ${{ inputs.tier }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- **URL:** https://${{ inputs.client_name }}.koneksi.co.kr" >> "$GITHUB_STEP_SUMMARY"

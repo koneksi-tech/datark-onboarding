@@ -87,6 +87,32 @@ app.get('/api/tenants/:name', requireAuth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: String(e.message || e) }); }
 });
 
+// ---- onboard a tenant (trigger the provisioning pipeline) ----
+const GH_TOKEN = process.env.GITHUB_TOKEN;
+const GH_REPO = process.env.GITHUB_REPO || 'koneksi-tech/datark-onboarding';
+const GH_WORKFLOW = process.env.GITHUB_WORKFLOW || 'provision-tenant.yml';
+const TIERS = ['free', 'starter', 'pro', 'enterprise'];
+
+app.post('/api/tenants', requireAuth, async (req, res) => {
+  const client = (req.body && req.body.client || '').trim();
+  const tier = (req.body && req.body.tier || '').trim();
+  if (!/^[a-z0-9]([a-z0-9-]{1,28}[a-z0-9])$/.test(client))
+    return res.status(400).json({ error: 'client name must be lowercase a-z 0-9 -, 3–30 chars' });
+  if (!TIERS.includes(tier)) return res.status(400).json({ error: 'invalid tier' });
+  if (!GH_TOKEN) return res.status(500).json({ error: 'GITHUB_TOKEN not configured on the console' });
+  try {
+    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/actions/workflows/${GH_WORKFLOW}/dispatches`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${GH_TOKEN}`, Accept: 'application/vnd.github+json',
+        'Content-Type': 'application/json', 'User-Agent': 'datark-console' },
+      body: JSON.stringify({ ref: 'main', inputs: { client_name: client, tier } }),
+    });
+    if (r.status === 204) return res.json({ ok: true, message: `Provisioning "${client}" (${tier}) started.` });
+    const t = await r.text();
+    res.status(502).json({ error: `pipeline dispatch failed (${r.status}): ${t.slice(0, 180)}` });
+  } catch (e) { res.status(500).json({ error: String(e.message || e) }); }
+});
+
 // ---- destroy a tenant (delete its namespace) ----
 app.delete('/api/tenants/:name', requireAuth, async (req, res) => {
   const ns = NS_PREFIX + req.params.name;
