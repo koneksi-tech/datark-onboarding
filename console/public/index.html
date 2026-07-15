@@ -51,6 +51,9 @@
   .copy{cursor:pointer;color:var(--accent);font-size:12px;font-weight:600}
   #bk{font-family:ui-monospace,monospace;font-size:13px}
   .ecard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-bottom:12px}
+  .stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .stat{flex:1;min-width:130px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .stat .n{font-size:26px;font-weight:800;line-height:1.1}.stat .k{font-size:12px;color:var(--muted);margin-top:2px}
 </style>
 </head>
 <body>
@@ -149,10 +152,30 @@ async function render(){
   try{
     if(view==='cluster') return renderCluster();
     if(view==='tenant') return renderTenant();
+    if(view==='tenants') return renderTenants();
     return renderDashboard();
   }catch(e){ if(e.auth) renderLogin('Please sign in.'); }
 }
+// Dashboard = summary of all deployments
 async function renderDashboard(){
+  const [td, nd] = await Promise.all([api('/api/tenants'), api('/api/nodes').catch(()=>({nodes:[]}))]);
+  const ts=td.tenants||[], nodes=nd.nodes||[];
+  const healthy=ts.filter(t=>t.status==='healthy').length, degraded=ts.filter(t=>t.status!=='healthy').length;
+  const nready=nodes.filter(n=>n.status==='Ready').length;
+  const stat=(n,k,c)=>`<div class="stat"><div class="n" ${c?`style="color:${c}"`:''}>${n}</div><div class="k">${k}</div></div>`;
+  const byTier=['free','starter','pro','enterprise'].map(x=>`<span class="tag" style="margin-right:6px">${x}: ${ts.filter(t=>t.tier===x).length}</span>`).join('');
+  shell(`<div class="top"><div class="h">Overview</div><button class="btn" onclick="openOnboard()">＋ Onboard Tenant</button></div>
+    <div class="stats">
+      ${stat(ts.length,'Tenants')}
+      ${stat(healthy,'Healthy','var(--ok)')}
+      ${stat(degraded,'Needs attention', degraded?'var(--warn)':undefined)}
+      ${stat(nready+'/'+nodes.length,'Nodes ready')}
+    </div>
+    <div class="ecard"><b>Tenants by plan</b> &nbsp; ${byTier}</div>
+    <p class="muted" style="font-size:12px">Open the <span class="lnk" style="cursor:pointer" onclick="go('tenants')">Tenants</span> tab to manage (open · onboard · destroy), or <span class="lnk" style="cursor:pointer" onclick="go('cluster')">Cluster</span> for nodes.</p>`);
+}
+// Tenants = full list / management
+async function renderTenants(){
   const d=await api('/api/tenants');
   const rows=(d.tenants||[]).map(t=>`<tr class="click" onclick="openTenant('${t.name}')">
     <td><b>${t.name}</b></td><td><span class="tag">${t.tier}</span></td>
