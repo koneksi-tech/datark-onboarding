@@ -1,17 +1,16 @@
-# Starter tier — 1 kripfs node
+# Starter tier — 2 kripfs nodes.
+# Only kripfs changes vs free: +1 replica, storage 20->50Gi (online expansion).
+# mongo/postgres storage stays the fixed value in values.yaml.
 tier: "starter"
 kripfs:
-  replicas: 1
+  replicas: 2
   replicationFactor: 1
-  storage: "10Gi"
+  storage: "50Gi"
   resources:
     requests: { cpu: "250m", memory: "512Mi" }
     limits:   { cpu: "500m", memory: "1Gi" }
-mongo:
-  storage: "5Gi"
-postgres:
-  storage: "5Gi"
+# storage = kripfs(2x50) + mongo(20) + postgres(20) = 140Gi
 quota:
   cpu: "4"
   memory: "8Gi"
-  storage: "50Gi"
+  storage: "160Gi"

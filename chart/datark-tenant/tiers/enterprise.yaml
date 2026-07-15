@@ -1,17 +1,16 @@
-# Enterprise tier — 5 kripfs nodes
+# Enterprise tier — 5 kripfs nodes.
+# Only kripfs changes vs pro: +2 replicas, replicationFactor 2->3,
+# storage 100->250Gi (online expansion). mongo/postgres stay fixed (values.yaml).
 tier: "enterprise"
 kripfs:
   replicas: 5
   replicationFactor: 3
-  storage: "200Gi"
+  storage: "250Gi"
   resources:
     requests: { cpu: "1",  memory: "2Gi" }
     limits:   { cpu: "2",  memory: "4Gi" }
-mongo:
-  storage: "100Gi"
-postgres:
-  storage: "50Gi"
+# storage = kripfs(5x250) + mongo(20) + postgres(20) = 1290Gi
 quota:
-  cpu: "24"
-  memory: "48Gi"
-  storage: "1200Gi"
+  cpu: "16"
+  memory: "28Gi"
+  storage: "1350Gi"

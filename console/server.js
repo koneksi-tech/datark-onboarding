@@ -82,6 +82,8 @@ app.get('/api/tenants/:name', requireAuth, async (req, res) => {
         ok: (s.status.readyReplicas || 0) === (s.spec.replicas || 0) });
     let host = null;
     try { const ings = (await net.listNamespacedIngress(ns)).body.items; host = ings[0] && ings[0].spec.rules[0].host; } catch (_) {}
+    let tier = '—';
+    try { const nsObj = (await core.readNamespace(ns)).body; tier = (nsObj.metadata.labels || {})['datark.koneksi.co.kr/tier'] || '—'; } catch (_) {}
     let bearer = null;
     try {
       const s = (await core.readNamespacedSecret(`${req.params.name}-secret`, ns)).body;
@@ -89,7 +91,7 @@ app.get('/api/tenants/:name', requireAuth, async (req, res) => {
       if (b64) bearer = Buffer.from(b64, 'base64').toString('utf8');
     } catch (_) {}
     workloads.sort((a, b) => a.name.localeCompare(b.name));
-    res.json({ name: req.params.name, namespace: ns, endpoint: host ? `https://${host}` : null, bearer, workloads });
+    res.json({ name: req.params.name, namespace: ns, tier, endpoint: host ? `https://${host}` : null, bearer, workloads });
   } catch (e) { res.status(500).json({ error: String(e.message || e) }); }
 });
 

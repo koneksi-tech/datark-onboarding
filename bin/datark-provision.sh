@@ -41,6 +41,59 @@ helmc -n "$NS" status "$REL" >/dev/null 2>&1 || FRESH=true
 $FRESH && log "provisioning NEW tenant '$TENANT' (tier=$TIER, ns=$NS)" \
         || log "upgrading existing tenant '$TENANT' (tier=$TIER, ns=$NS)"
 
+# -----------------------------------------------------------------------------
+# expand_kripfs_pvcs — grow-only online storage expansion for kripfs (UPGRADE).
+#
+# A StatefulSet's volumeClaimTemplates size is immutable, so `helm upgrade` cannot
+# resize it. Instead we grow the underlying Cinder volumes out-of-band (the SC has
+# allowVolumeExpansion=true) and let helm recreate the STS at the matching size:
+#   1) delete the STS with --cascade=orphan  (pods + PVCs stay bound: no downtime,
+#      no data movement)
+#   2) patch each kripfs PVC to the new size (Cinder expands the block device +
+#      filesystem online)
+#   3) return — the caller's `helm upgrade` recreates the STS with the larger
+#      volumeClaimTemplate, adopts the orphaned pods, and scales up new ones.
+# Shrink is refused (Cinder can't shrink) — that is why downgrade is unsupported.
+expand_kripfs_pvcs() {
+  local kn desired_raw desired_gi pvc cur need=false
+  kn="${TENANT}-kripfs"
+  # authoritative desired size = kripfs.storage from the tier file
+  desired_raw="$(awk '/^kripfs:/{f=1;next} /^[^[:space:]#]/{f=0} f&&$1=="storage:"{gsub(/"/,"",$2);print $2;exit}' "$TIERS_DIR/$TIER.yaml")"
+  [[ -n "$desired_raw" ]] || return 0
+  desired_gi="${desired_raw%Gi}"
+  local pvcs=()
+  while IFS= read -r p; do [[ -n "$p" ]] && pvcs+=("$p"); done \
+    < <(kc -n "$NS" get pvc -o name 2>/dev/null | grep -E "/data-${kn}-[0-9]+$" || true)
+  [[ ${#pvcs[@]} -gt 0 ]] || { log "no existing kripfs PVCs — nothing to expand"; return 0; }
+  for pvc in "${pvcs[@]}"; do
+    cur="$(kc -n "$NS" get "$pvc" -o jsonpath='{.spec.resources.requests.storage}' 2>/dev/null)"
+    cur="${cur%Gi}"
+    [[ -n "$cur" ]] || continue
+    if (( desired_gi < cur )); then
+      die "cannot shrink kripfs $pvc (${cur}Gi -> ${desired_gi}Gi). Downgrade is not supported."
+    fi
+    (( desired_gi > cur )) && need=true
+  done
+  $need || { log "kripfs storage already ${desired_gi}Gi — no expansion needed"; return 0; }
+  log "growing kripfs storage to ${desired_gi}Gi (online, data-safe): orphan STS + patch ${#pvcs[@]} PVC(s)"
+  # Raise the storage quota FIRST — the PVC patch below counts against requests.storage,
+  # and helm only reconciles the quota later (step 5). Without this the patch is rejected
+  # by the still-lower current-tier quota. Set it to the target tier's quota value.
+  local q_storage
+  q_storage="$(awk '/^quota:/{f=1;next} /^[^[:space:]#]/{f=0} f&&$1=="storage:"{gsub(/"/,"",$2);print $2;exit}' "$TIERS_DIR/$TIER.yaml")"
+  if [[ -n "$q_storage" ]]; then
+    kc -n "$NS" patch resourcequota "${TENANT}-quota" --type merge \
+      -p "{\"spec\":{\"hard\":{\"requests.storage\":\"${q_storage}\"}}}" >/dev/null 2>&1 \
+      && log "  raised storage quota -> ${q_storage}"
+  fi
+  kc -n "$NS" delete statefulset "$kn" --cascade=orphan >/dev/null 2>&1 || true
+  for pvc in "${pvcs[@]}"; do
+    kc -n "$NS" patch "$pvc" --type merge \
+      -p "{\"spec\":{\"resources\":{\"requests\":{\"storage\":\"${desired_gi}Gi\"}}}}" >/dev/null
+    log "  patched $pvc -> ${desired_gi}Gi"
+  done
+}
+
 rollback() {
   warn "provisioning failed — rolling back"
   if $FRESH; then
@@ -76,6 +129,13 @@ secret_sync "$TENANT"
 # HELM_WAIT=false returns immediately (no --wait/rollback) for observation.
 : "${KRIPFS_ENABLED:=true}"; export KRIPFS_ENABLED
 : "${HELM_WAIT:=true}"
+
+# 4.5) grow-only kripfs storage (upgrade path only). Fresh installs have no PVCs
+# yet, so the volumeClaimTemplate size is applied directly by the install below.
+if ! $FRESH && [[ "$KRIPFS_ENABLED" == "true" ]]; then
+  expand_kripfs_pvcs
+fi
+
 if [[ "$HELM_WAIT" == "true" ]]; then WAIT_ARGS=(--wait --timeout 10m); else WAIT_ARGS=(--wait=false); fi
 helmc upgrade --install "$REL" "$CHART_DIR" \
   -n "$NS" --create-namespace \

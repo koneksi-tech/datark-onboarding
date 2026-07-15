@@ -1,17 +1,16 @@
-# Pro tier — 3 kripfs nodes
+# Pro tier — 3 kripfs nodes.
+# Only kripfs changes vs starter: +1 replica, replicationFactor 1->2,
+# storage 50->100Gi (online expansion). mongo/postgres stay fixed (values.yaml).
 tier: "pro"
 kripfs:
   replicas: 3
   replicationFactor: 2
-  storage: "50Gi"
+  storage: "100Gi"
   resources:
     requests: { cpu: "500m", memory: "1Gi" }
     limits:   { cpu: "1",    memory: "2Gi" }
-mongo:
-  storage: "20Gi"
-postgres:
-  storage: "20Gi"
+# storage = kripfs(3x100) + mongo(20) + postgres(20) = 340Gi
 quota:
-  cpu: "12"
-  memory: "24Gi"
-  storage: "250Gi"
+  cpu: "8"
+  memory: "12Gi"
+  storage: "380Gi"

@@ -35,6 +35,8 @@ images:
   mongo:    "mongo:7"
   # TimescaleDB-enabled Postgres — the backend does CREATE EXTENSION timescaledb.
   postgres: "timescale/timescaledb:2.17.2-pg16"
+  # kripfs-db — DB backup daemon (backs a tenant DB up to the tenant's kipfs).
+  kripfsDb: "36163004-kr1-registry.container.nhncloud.com/koneksi-tech/kripfs-db:v0.0.3"
 
 # ---- kripfs (StatefulSet) ----------------------------------------------------
 kripfs:
@@ -78,7 +80,9 @@ redis:
 mongo:
   port: 27017
   rootUser: "root"
-  storage: "5Gi"
+  # FIXED across all tiers — never overridden by tier files, never resized on
+  # upgrade (keeps helm off the immutable-volume path). Only kripfs storage grows.
+  storage: "20Gi"
   resources:
     requests: { cpu: "250m", memory: "512Mi" }
     limits:   { cpu: "500m", memory: "1Gi" }
@@ -86,10 +90,19 @@ mongo:
 # ---- postgres (StatefulSet) --------------------------------------------------
 postgres:
   port: 5432
-  storage: "5Gi"
+  # FIXED across all tiers (same rationale as mongo.storage above).
+  storage: "20Gi"
   resources:
     requests: { cpu: "250m", memory: "256Mi" }
     limits:   { cpu: "500m", memory: "512Mi" }
+
+# ---- kripfs-db (Deployment, 1 pod all tiers, internal — no public endpoint) --
+kripfsDb:
+  enabled: true                  # required component per tier
+  backupDbType: "postgresql"     # which DB it backs up (postgresql|mysql|mongodb)
+  resources:
+    requests: { cpu: "100m", memory: "128Mi" }
+    limits:   { cpu: "250m", memory: "256Mi" }
 
 # ---- Vault (this environment's dedicated cluster; NOT prod koneksi vault) -----
 vault:

@@ -1,0 +1,80 @@
+{{- if .Values.kripfsDb.enabled }}
+{{- $isMongo := eq .Values.kripfsDb.backupDbType "mongodb" -}}
+# config.yaml for the kripfs-db backup daemon — backs the tenant's DB up to the
+# tenant's own kipfs. Bearer + DB password come from the per-tenant Secret via env.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "datark.kripfsdb.name" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "datark.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    kipfs:
+      url: {{ printf "http://%s:%d" (include "datark.kripfs.svc" .) (int .Values.kripfs.gatewayPort) | quote }}
+      token_env: KRIPFSDB_KIPFS_TOKEN
+    database:
+      type: {{ .Values.kripfsDb.backupDbType | quote }}
+      password_env: KRIPFSDB_DB_PASSWORD
+    {{- if $isMongo }}
+      host: {{ include "datark.mongo.svc" . | quote }}
+      port: {{ .Values.mongo.port }}
+      user: {{ .Values.mongo.rootUser | quote }}
+      auth_db: admin
+      name: {{ .Values.backend.mongoDatabase | quote }}
+    {{- else }}
+      host: {{ include "datark.postgres.svc" . | quote }}
+      port: {{ .Values.postgres.port }}
+      user: {{ .Values.backend.postgresUser | quote }}
+      name: {{ .Values.backend.postgresDb | quote }}
+      ssl_mode: disable
+    {{- end }}
+    reporting:
+      http_port: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "datark.kripfsdb.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "datark.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "datark.kripfsdb.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "datark.kripfsdb.name" . }}
+        {{- include "datark.labels" . | nindent 8 }}
+    spec:
+      {{- if .Values.imagePullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecret }}
+      {{- end }}
+      containers:
+        - name: kripfs-db
+          image: {{ .Values.images.kripfsDb | quote }}
+          args: ["start", "--config", "/etc/kripfs-db/config.yaml"]
+          env:
+            # kipfs bearer (same per-tenant token the backend uses)
+            - name: KRIPFSDB_KIPFS_TOKEN
+              valueFrom: { secretKeyRef: { name: {{ include "datark.secretName" . }}, key: KIPFS_STATIC_BEARER } }
+            # DB password for the backed-up database
+            - name: KRIPFSDB_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "datark.secretName" . }}
+                  key: {{ if eq .Values.kripfsDb.backupDbType "mongodb" }}MONGO_PASSWORD{{ else }}POSTGRES_PASSWORD{{ end }}
+          resources:
+            {{- toYaml .Values.kripfsDb.resources | nindent 12 }}
+          volumeMounts:
+            - { name: config, mountPath: /etc/kripfs-db, readOnly: true }
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "datark.kripfsdb.name" . }}-config
+{{- end }}

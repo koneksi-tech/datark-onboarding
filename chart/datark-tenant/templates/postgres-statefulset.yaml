@@ -1,3 +1,21 @@
+{{- if .Values.kripfsDb.enabled }}
+# initdb script: allow replication connections so kripfs-db's pg_basebackup can run.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "datark.postgres.name" . }}-init
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "datark.labels" . | nindent 4 }}
+data:
+  01-replication.sh: |
+    #!/bin/sh
+    set -e
+    HBA="$PGDATA/pg_hba.conf"
+    grep -q "host replication all all" "$HBA" || \
+      echo "host replication all all scram-sha-256" >> "$HBA"
+---
+{{- end }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -41,6 +59,16 @@ spec:
             {{- toYaml .Values.postgres.resources | nindent 12 }}
           volumeMounts:
             - { name: data, mountPath: /var/lib/postgresql/data }
+            {{- if .Values.kripfsDb.enabled }}
+            - { name: initdb, mountPath: /docker-entrypoint-initdb.d, readOnly: true }
+            {{- end }}
+      {{- if .Values.kripfsDb.enabled }}
+      volumes:
+        - name: initdb
+          configMap:
+            name: {{ include "datark.postgres.name" . }}-init
+            defaultMode: 0755
+      {{- end }}
   volumeClaimTemplates:
     - metadata:
         name: data

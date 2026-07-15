@@ -62,6 +62,8 @@
 const $ = h => { const d=document.createElement('div'); d.innerHTML=h.trim(); return d.firstChild; };
 const root = document.getElementById('root');
 let view = 'dashboard', currentTenant = null, timer = null, modalOpen = false;
+const TIER_LADDER=['free','starter','pro','enterprise'];
+const TIER_SPEC={free:'1 node · 20Gi',starter:'2 nodes · 50Gi',pro:'3 nodes · 100Gi',enterprise:'5 nodes · 250Gi'};
 
 function dot(s){return s==='healthy'||s==='Ready'?'green':s==='degraded'?'amber':s==='unknown'?'gray':'red';}
 const EYE='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>';
@@ -115,7 +117,7 @@ window.destroyTenant = async name => {
   render();
 };
 window.openOnboard = () => {
-  const tiers=[['free','1 kipfs · 2Gi'],['starter','1 kipfs · 10Gi'],['pro','3 kipfs · 50Gi'],['enterprise','5 kipfs · 200Gi']];
+  const tiers=TIER_LADDER.map(t=>[t,TIER_SPEC[t]]);
   let tier='starter';
   const m=$(`<div class="overlay"><div class="sheet">
     <div class="h">Onboard a new tenant</div>
@@ -145,6 +147,33 @@ window.openOnboard = () => {
     else { m.querySelector('#oe').textContent=d.error||('failed ('+r.status+')'); btn.disabled=false; btn.textContent='Provision tenant →'; }
   };
   oc.focus();
+};
+window.openUpgrade = (name, current) => {
+  const higher = TIER_LADDER.slice(TIER_LADDER.indexOf(current)+1);
+  if(!higher.length){ alert(`"${name}" is already on the highest plan (${current}).`); return; }
+  let tier=higher[0];
+  const m=$(`<div class="overlay"><div class="sheet">
+    <div class="h">Upgrade ${name}</div>
+    <div class="muted" style="font-size:12px;margin-bottom:6px">Current plan: <b>${current}</b>. Upgrading adds kripfs nodes and grows their storage in place — existing data is preserved (brief kripfs restart). Databases are untouched. Upgrade is one-way; downgrade is not supported.</div>
+    <label>New plan</label>
+    <div class="tiers" id="ut">${higher.map((t,i)=>`<div class="tc ${i===0?'sel':''}" data-t="${t}"><b>${t}</b><div class="sp">${TIER_SPEC[t]}</div></div>`).join('')}</div>
+    <div class="err" id="ue"></div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn" id="ugo" style="flex:1;background:var(--accent)">Upgrade →</button>
+      <button class="back" id="ux">Cancel</button>
+    </div></div></div>`);
+  modalOpen=true; document.body.appendChild(m);
+  const close=()=>{ modalOpen=false; m.remove(); };
+  m.querySelectorAll('.tc').forEach(el=>el.onclick=()=>{m.querySelectorAll('.tc').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');tier=el.dataset.t;});
+  m.querySelector('#ux').onclick=close;
+  m.querySelector('#ugo').onclick=async()=>{
+    m.querySelector('#ue').textContent='';
+    const btn=m.querySelector('#ugo'); btn.disabled=true; btn.textContent='Upgrading…';
+    const r=await fetch('/api/tenants',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({client:name,tier})});
+    const d=await r.json().catch(()=>({}));
+    if(r.ok){ close(); alert(d.message||`Upgrade to ${tier} started.`); setTimeout(render,4000); }
+    else { m.querySelector('#ue').textContent=d.error||('failed ('+r.status+')'); btn.disabled=false; btn.textContent='Upgrade →'; }
+  };
 };
 
 // ---------- VIEWS ----------
@@ -198,7 +227,8 @@ async function renderTenant(){
     <span class="eye" id="beye" title="Show / hide" onclick="toggleBearer()">${EYEOFF}</span>
     <span class="copy" id="bcopy" onclick="copyBearer()">copy</span></div>` : '';
   shell(`<button class="back" onclick="go('dashboard')">← Tenants</button>
-    <div class="top"><div class="h">${d.name} <span class="muted" style="font-size:13px">· ${d.namespace}</span></div></div>
+    <div class="top"><div class="h">${d.name} <span class="tag">${d.tier||'—'}</span> <span class="muted" style="font-size:13px">· ${d.namespace}</span></div>
+      <button class="btn" onclick="openUpgrade('${d.name}','${d.tier||''}')">⬆ Upgrade plan</button></div>
     <div class="ecard"><b>Endpoint</b> ${d.endpoint?`<span class="dot green"></span><a class="lnk" href="${d.endpoint}" target="_blank">${d.endpoint}</a>`:'<span class="muted">—</span>'}</div>
     ${bearerCard}
     <table><thead><tr><th>WORKLOAD</th><th>KIND</th><th>READY</th></tr></thead>

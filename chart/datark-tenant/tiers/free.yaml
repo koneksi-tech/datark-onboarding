@@ -1,18 +1,19 @@
-# Free tier — 1 kripfs node, minimal resources
+# Free tier — 1 kripfs node.
+# UPGRADE MODEL: only kripfs scales — replica count AND per-pod storage grow per
+# tier (storage grows in place via online PVC expansion; see datark-provision.sh).
+# mongo/postgres storage is FIXED across every tier (values.yaml) and is NEVER
+# resized on upgrade — that keeps `helm upgrade` off the immutable-volume path.
 tier: "free"
 kripfs:
   replicas: 1
   replicationFactor: 1
-  storage: "2Gi"
+  storage: "20Gi"                 # grow-only ladder: 20 -> 50 -> 100 -> 250
   resources:
     requests: { cpu: "100m", memory: "256Mi" }
     limits:   { cpu: "250m", memory: "512Mi" }
-mongo:
-  storage: "1Gi"
-postgres:
-  storage: "1Gi"
-# quota must fit the sum of all component LIMITS (backend+redis+mongo+postgres+kripfs)
+# quota must fit sum of all component LIMITS + all PVC storage requests.
+# storage = kripfs(1x20) + mongo(20) + postgres(20) = 60Gi (+headroom)
 quota:
   cpu: "3"
   memory: "5Gi"
-  storage: "10Gi"
+  storage: "80Gi"

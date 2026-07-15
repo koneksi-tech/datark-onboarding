@@ -10,6 +10,7 @@
 {{- define "datark.redis.name"    -}}{{ include "datark.id" . }}-redis{{- end -}}
 {{- define "datark.mongo.name"    -}}{{ include "datark.id" . }}-mongo{{- end -}}
 {{- define "datark.postgres.name" -}}{{ include "datark.id" . }}-postgres{{- end -}}
+{{- define "datark.kripfsdb.name" -}}{{ include "datark.id" . }}-kripfs-db{{- end -}}
 
 {{/* Secret name (materialized from Vault by secret-sync.sh) */}}
 {{- define "datark.secretName" -}}
