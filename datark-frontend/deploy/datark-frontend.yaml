@@ -1,0 +1,92 @@
+# DatArk frontend (koneksi web UI) — self-contained deployment for the datark cluster.
+# Namespace: datark-frontend · exposed via ingress-nginx (shared LB) with the wildcard TLS.
+# Prereqs created at deploy time (not committed): the `ncr-regcred` pull secret and the
+# `datark-frontend-tls` wildcard TLS secret in the datark-frontend namespace.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: datark-frontend
+  labels:
+    app.kubernetes.io/part-of: datark
+---
+# Frontend env (VITE_*). VITE_ values are bundled into the static JS at build time and
+# are publicly visible — treat as non-secret. Copied from the nhn koneksi-frontend config.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: datark-frontend-config
+  namespace: datark-frontend
+data:
+  VITE_ENVIRONMENT: "production"
+  VITE_APP_KEY: "7Qx8R2nU6pL3mF9sT1wZ4gH0jK5cE8bA"
+  VITE_API_REGIONS_JSON: '{"idc":"https://api.koneksi.co.kr","nhn":"https://nhn-api.koneksi.co.kr"}'
+  VITE_API_DEFAULT_REGION: "nhn"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: datark-frontend
+  namespace: datark-frontend
+  labels:
+    app: datark-frontend
+    app.kubernetes.io/name: koneksi-frontend
+    app.kubernetes.io/part-of: datark
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: datark-frontend }
+  template:
+    metadata:
+      labels: { app: datark-frontend }
+    spec:
+      imagePullSecrets:
+        - name: ncr-regcred
+      containers:
+        - name: frontend
+          image: 36163004-kr1-registry.container.nhncloud.com/koneksi-tech/koneksi-frontend:v0.0.3
+          imagePullPolicy: Always
+          ports:
+            - { name: http, containerPort: 80 }
+          envFrom:
+            - configMapRef: { name: datark-frontend-config }
+          readinessProbe:
+            httpGet: { path: /, port: http }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests: { cpu: "50m", memory: "128Mi" }
+            limits:   { cpu: "500m", memory: "512Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: datark-frontend
+  namespace: datark-frontend
+spec:
+  selector: { app: datark-frontend }
+  ports:
+    - { name: http, protocol: TCP, port: 80, targetPort: http }
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: datark-frontend
+  namespace: datark-frontend
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: ["datark-poc.koneksi.co.kr"]
+      secretName: datark-frontend-tls
+  rules:
+    - host: datark-poc.koneksi.co.kr
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: datark-frontend
+                port:
+                  number: 80
