@@ -19,7 +19,11 @@ metadata:
 data:
   VITE_ENVIRONMENT: "production"
   VITE_APP_KEY: "7Qx8R2nU6pL3mF9sT1wZ4gH0jK5cE8bA"
-  VITE_API_REGIONS_JSON: '{"idc":"https://api.koneksi.co.kr","nhn":"https://nhn-api.koneksi.co.kr"}'
+  # NOTE: this image bakes VITE_* into the JS at BUILD time — this ConfigMap does
+  # NOT change which backend the app calls. To actually target the DatArk demo
+  # tenant, rebuild koneksi-frontend with VITE_API_REGIONS_JSON below and deploy
+  # that tag. Values here document the intended target.
+  VITE_API_REGIONS_JSON: '{"idc":"https://demo.koneksi.co.kr","nhn":"https://demo.koneksi.co.kr"}'
   VITE_API_DEFAULT_REGION: "nhn"
 ---
 apiVersion: apps/v1
