@@ -30,7 +30,7 @@ images:
   # NOTE: this registry is in the PROD koneksi NHN account (36163004). The new-account
   # cluster can only pull it if the repo is public/cross-account, else mirror it into
   # this environment's own registry. Pull secret name below = imagePullSecret.
-  backend:  "36163004-kr1-registry.container.nhncloud.com/koneksi-tech/koneksi-backend:v0.0.2"
+  backend:  "36163004-kr1-registry.container.nhncloud.com/koneksi-tech/koneksi-backend:v0.1.0-staging"
   redis:    "redis:7-alpine"
   mongo:    "mongo:7"
   # TimescaleDB-enabled Postgres — the backend does CREATE EXTENSION timescaledb.
