@@ -186,11 +186,25 @@ POST /cluster/add  (Bearer &lt;demo user JWT&gt;, Environment: local)
 </ul>
 
 <!-- 8 -->
-<h2 id="todo">8 · Remaining items &amp; caveats</h2>
-<div class="note warn"><b>a) Persist in the Helm chart.</b> <code>announce_addr</code> is already wired into the chart (value <code>kripfs.announceAddr</code>, default <code>""</code>→<code>null</code>). <code>koneksi_backend_url</code> (#5) is currently <b>live-patched only</b> — it should be folded into the chart the same way so future tenants get it automatically and a <code>helm upgrade</code> doesn’t wipe it.</div>
-<div class="note warn"><b>b) Large files → 502.</b> One earlier attempt (a <b>64&nbsp;MB</b> file) got <code>Connection reset by peer</code> from kipfs. Small files are confirmed green; if large files still 502, that’s a separate kipfs body-size / timeout tune, <b>not</b> an auth issue.</div>
-<div class="note bad"><b>c) Do NOT let the engine send <code>Environment: production</code> for tenants.</b> The whole fix relies on the header being <b>unrecognized</b> (so kipfs uses <code>koneksi_backend_url</code>). If <code>feat/detect-poc-domains</code> (PR&nbsp;#145) ships and maps a tenant to <code>production/uat/staging</code>, kipfs routes back to the shared prod backend → 401 again. DatArk tenants must send a non-(production/uat/staging) value.</div>
-<div class="note good"><b>Bottom line:</b> the current desktop build works against the demo tenant with the server-side config in place. Recommended next: (1) fold #5 into the chart, (2) confirm large-file behavior, (3) reconcile PR&nbsp;#145 with caveat (c).</div>
+<h2 id="standard">8 · Now the onboarding standard <span class="tag tg-ok" style="vertical-align:middle">DONE</span></h2>
+<p class="sub">All five changes are folded into the Helm chart <code>chart/datark-tenant</code>, so <b>every future tenant gets them automatically</b>. The standard public kripfs endpoint is <b><code>&lt;id&gt;-cluster.koneksi.co.kr</code></b> (e.g. <code>acme-cluster.koneksi.co.kr</code>).</p>
+<table>
+  <tr><th>Config</th><th>How the chart applies it</th></tr>
+  <tr><td>Public kripfs ingress</td><td>new <code>templates/kripfs-ingress.yaml</code> → <code>&lt;id&gt;-cluster.&lt;domain&gt;</code> → <code>&lt;id&gt;-kripfs:8080</code></td></tr>
+  <tr><td>NetworkPolicy :8080</td><td><code>networkpolicy.yaml</code> opens 8080 to the ingress-nginx namespace</td></tr>
+  <tr><td>Backend <code>IPFS_NODE_URL</code>/<code>_DOWNLOAD_URL</code></td><td><code>backend-config.yaml</code> → <code>https://&lt;id&gt;-cluster.&lt;domain&gt;</code> (so <code>upload_url</code> is publicly reachable)</td></tr>
+  <tr><td>kipfs <code>announce_addr</code></td><td>auto-derives to the same URL (helper <code>datark.kripfs.announce</code>)</td></tr>
+  <tr><td>kipfs <code>koneksi_backend_url</code></td><td>auto = <code>http://&lt;id&gt;-backend.&lt;ns&gt;.svc.cluster.local</code> — per-tenant JWTs validate against the tenant’s <b>own</b> backend</td></tr>
+</table>
+<div class="note good"><b>Gating &amp; controls:</b> all of the above are behind <code>kripfs.publicEndpoint: true</code> in <code>values.yaml</code>; set <code>false</code> for an internal-only tenant (backend then uses the internal ClusterIP and no public ingress is created). <code>announceAddr</code> can still be set explicitly to override the auto-derived value.</div>
+<div class="note"><b>DNS &amp; UI:</b> provisioning (<code>bin/datark-provision.sh</code>) now prints <b>both</b> required A records — <code>&lt;id&gt;.&lt;domain&gt;</code> (backend) and <code>&lt;id&gt;-cluster.&lt;domain&gt;</code> (kripfs) → the ingress-nginx LB. The onboarding <b>Console</b> tenant detail shows the <b>kripfs cluster endpoint</b> next to the Backend API.</div>
+<div class="note warn"><b>Demo is grandfathered.</b> The live demo tenant stays on <code>demo-poc-cluster.koneksi.co.kr</code> (live-patched, not helm-upgraded). Do <b>not</b> <code>helm upgrade</code> demo without first adding <code>demo-cluster.koneksi.co.kr</code> DNS, or the backend would repoint to a host with no DNS. New tenants are unaffected.</div>
+
+<!-- 9 -->
+<h2 id="todo">9 · Remaining items &amp; caveats</h2>
+<div class="note good"><b>a) Large files — RESOLVED.</b> A <b>200&nbsp;MB</b> upload succeeded end-to-end from the desktop. The earlier <code>64&nbsp;MB</code> <code>Connection reset by peer</code> was transient (kipfs pod mid-restart during the config changes), not a body-size limit — the ingress already sets <code>proxy-body-size: "0"</code> + 600s timeouts.</div>
+<div class="note bad"><b>b) Do NOT let the engine send <code>Environment: production</code> for tenants.</b> The whole fix relies on the header being <b>unrecognized</b> (so kipfs uses <code>koneksi_backend_url</code>). If <code>feat/detect-poc-domains</code> (PR&nbsp;#145) ships and maps a tenant to <code>production/uat/staging</code>, kipfs routes back to the shared prod backend → 401 again. DatArk tenants must send a non-(production/uat/staging) value.</div>
+<div class="note good"><b>Bottom line:</b> desktop upload works against the demo tenant — verified up to a <b>200&nbsp;MB</b> file — and the fix is now the chart standard for all future onboarding (§8). Only open item: reconcile PR&nbsp;#145 with caveat (b) above (keep the engine from sending <code>Environment: production</code> for tenants).</div>
 
 <div class="foot">DatArk PoC · Desktop upload fix on the Kubernetes demo tenant (<code>tenant-demo</code>) · 2026‑07‑17.
 Endpoint <code>demo-poc-cluster.koneksi.co.kr → 133.186.214.160</code>. Related: <code>DATARK-ONBOARDING.html</code>, <code>poc-upload-flow.html</code>.
