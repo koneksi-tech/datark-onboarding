@@ -19,9 +19,17 @@ data:
   POSTGRES_USER: {{ .Values.backend.postgresUser | quote }}
   POSTGRES_DB: {{ .Values.backend.postgresDb | quote }}
   POSTGRES_SSL_MODE: "disable"
-  # --- kripfs (this tenant, internal) ---
+  # --- kripfs (this tenant) ---
+  # When publicEndpoint is on, use the public cluster URL so the upload_url the
+  # backend hands the Agent (IPFS_NODE_URL + /cluster/add) is reachable from the
+  # desktop. Otherwise use the internal ClusterIP (backend-only, no direct upload).
+  {{- if and .Values.kripfs.enabled .Values.kripfs.publicEndpoint }}
+  IPFS_NODE_URL: {{ printf "https://%s" (include "datark.cluster.host" .) | quote }}
+  IPFS_DOWNLOAD_URL: {{ printf "https://%s" (include "datark.cluster.host" .) | quote }}
+  {{- else }}
   IPFS_NODE_URL: {{ printf "http://%s:%d" (include "datark.kripfs.svc" .) (int .Values.kripfs.gatewayPort) | quote }}
   IPFS_DOWNLOAD_URL: {{ printf "http://%s:%d" (include "datark.kripfs.svc" .) (int .Values.kripfs.gatewayPort) | quote }}
+  {{- end }}
   # --- this environment's Vault (NOT prod koneksi vault) ---
   VAULT_ADDR: {{ required "vault.addr is required (feed ${VAULT_ADDR})" .Values.vault.addr | quote }}
   VAULT_NAMESPACE: ""

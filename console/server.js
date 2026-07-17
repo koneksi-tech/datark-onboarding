@@ -80,8 +80,17 @@ app.get('/api/tenants/:name', requireAuth, async (req, res) => {
     for (const s of (await apps.listNamespacedStatefulSet(ns)).body.items)
       workloads.push({ name: s.metadata.name, kind: 'StatefulSet', ready: `${s.status.readyReplicas || 0}/${s.spec.replicas || 0}`,
         ok: (s.status.readyReplicas || 0) === (s.spec.replicas || 0) });
-    let host = null;
-    try { const ings = (await net.listNamespacedIngress(ns)).body.items; host = ings[0] && ings[0].spec.rules[0].host; } catch (_) {}
+    let host = null, clusterHost = null;
+    try {
+      const ings = (await net.listNamespacedIngress(ns)).body.items;
+      for (const ing of ings) {
+        const h = ing.spec && ing.spec.rules && ing.spec.rules[0] && ing.spec.rules[0].host;
+        if (!h) continue;
+        // kripfs public endpoint = <id>-cluster.<domain> (ingress name ends -kripfs-public)
+        if ((ing.metadata.name || '').includes('kripfs') || h.includes('-cluster.')) clusterHost = h;
+        else if (!host) host = h;
+      }
+    } catch (_) {}
     let tier = '—';
     try { const nsObj = (await core.readNamespace(ns)).body; tier = (nsObj.metadata.labels || {})['datark.koneksi.co.kr/tier'] || '—'; } catch (_) {}
     let bearer = null, adminEmail = null, adminPassword = null;
@@ -94,6 +103,7 @@ app.get('/api/tenants/:name', requireAuth, async (req, res) => {
     } catch (_) {}
     workloads.sort((a, b) => a.name.localeCompare(b.name));
     res.json({ name: req.params.name, namespace: ns, tier, endpoint: host ? `https://${host}` : null,
+      clusterEndpoint: clusterHost ? `https://${clusterHost}` : null,
       bearer, adminEmail, adminPassword, workloads });
   } catch (e) { res.status(500).json({ error: String(e.message || e) }); }
 });

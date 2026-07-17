@@ -46,6 +46,15 @@ kripfs:
   gatewayPort: 8080
   swarmPort: 4001
   apiPort: 5001
+  # STANDARD: expose this tenant's kripfs cluster publicly at <id>-cluster.<domain>
+  # (kripfs-ingress.yaml). Required for the DatArk Agent/desktop direct upload path.
+  # When true, the backend's IPFS_NODE_URL and kripfs announce_addr both point at
+  # https://<id>-cluster.<domain>. Needs a DNS A record for that host.
+  publicEndpoint: true
+  # Override the routable URL advertised in /cluster/peers. Normally leave "" —
+  # it auto-derives to https://<id>-cluster.<domain> when publicEndpoint is true.
+  # Empty + publicEndpoint false => null (internal-only, unreachable from outside).
+  announceAddr: ""
   storage: "10Gi"                # per-pod PVC (blocks + identity + state)
   repoRoot: "/data"
   logLevel: "info"

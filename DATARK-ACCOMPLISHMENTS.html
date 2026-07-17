@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DatArk — What We've Achieved</title>
+<style>
+  :root{--bg:#f6f8fa;--card:#fff;--ink:#1f2328;--muted:#57606a;--line:#d0d7de;--accent:#1f6feb;--accent2:#8250df;--ok:#1a7f37;--warn:#9a6700;--err:#cf222e;--chip:#eaeef2;--code:#f0f3f6;}
+  @media (prefers-color-scheme:dark){:root{--bg:#0d1117;--card:#161b22;--ink:#e6edf3;--muted:#8b949e;--line:#30363d;--accent:#58a6ff;--accent2:#bc8cff;--ok:#3fb950;--warn:#d29922;--err:#f85149;--chip:#21262d;--code:#0b0f14;}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:1060px;margin:0 auto;padding:32px 20px 90px;}
+  header.top{border-bottom:2px solid var(--line);padding-bottom:18px;margin-bottom:8px;}
+  h1{font-size:26px;margin:0 0 6px;}
+  h2{font-size:19px;margin:34px 0 8px;padding-top:12px;border-top:1px solid var(--line);display:flex;align-items:center;gap:10px;}
+  .sub{color:var(--muted);font-size:14px;}
+  code{background:var(--code);padding:1px 5px;border-radius:5px;font:12px ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-word;}
+  .muted{color:var(--muted);}
+  /* KPI strip */
+  .kpis{display:flex;gap:12px;flex-wrap:wrap;margin:18px 0 4px;}
+  .kpi{flex:1;min-width:150px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;}
+  .kpi .n{font-size:26px;font-weight:700;line-height:1;}
+  .kpi .k{color:var(--muted);font-size:12.5px;margin-top:5px;}
+  .kpi.ok .n{color:var(--ok);} .kpi.warn .n{color:var(--warn);} .kpi.acc .n{color:var(--accent);}
+  /* badges */
+  .b{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;white-space:nowrap;}
+  .done{background:rgba(26,127,55,.15);color:var(--ok);}
+  .live{background:rgba(31,111,235,.14);color:var(--accent);}
+  .prog{background:rgba(154,103,0,.16);color:var(--warn);}
+  .pend{background:rgba(130,80,223,.16);color:var(--accent2);}
+  /* cards grid */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0;}
+  @media(max-width:720px){.grid{grid-template-columns:1fr;}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;}
+  .card h3{margin:0 0 4px;font-size:14.5px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .card p{margin:4px 0 0;font-size:12.8px;color:var(--muted);}
+  .card ul{margin:6px 0 0;padding-left:18px;font-size:12.6px;} .card li{margin:2px 0;}
+  ul.checks{list-style:none;padding-left:0;margin:8px 0;}
+  ul.checks li{padding:5px 0 5px 26px;position:relative;font-size:13px;border-bottom:1px solid var(--line);}
+  ul.checks li:last-child{border-bottom:0;}
+  ul.checks li::before{content:"✓";position:absolute;left:4px;color:var(--ok);font-weight:800;}
+  ul.checks li.x::before{content:"◔";color:var(--warn);}
+  .note{border-left:4px solid var(--accent);background:rgba(31,111,235,.06);border-radius:0 8px 8px 0;padding:10px 14px;margin:14px 0;font-size:13px;}
+  .note.good{border-left-color:var(--ok);background:rgba(26,127,55,.06);}
+  .note.warn{border-left-color:var(--warn);background:rgba(154,103,0,.06);}
+  table{border-collapse:collapse;width:100%;margin:9px 0;font-size:12.8px;display:block;overflow-x:auto;}
+  th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top;} th{background:var(--chip);font-weight:600;white-space:nowrap;}
+  .foot{margin-top:40px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <span class="b done">PLATFORM COMPLETE</span> <span class="b live">CONSOLE + WEB LIVE</span> <span class="b prog">DESKTOP AGENT IN PROGRESS</span>
+  <h1>DatArk — What We've Achieved</h1>
+  <p class="sub">NHN Cloud (Kubernetes) onboarding for the DatArk File DR product. Accomplishments to date on <code>datark-cluster</code> + dedicated Vault. As of 2026-07-16.</p>
+</header>
+
+<div class="kpis">
+  <div class="kpi ok"><div class="n">11 / 12</div><div class="k">PoC test cases PASS (T-01…T-11)</div></div>
+  <div class="kpi acc"><div class="n">6</div><div class="k">isolated services per tenant</div></div>
+  <div class="kpi ok"><div class="n">3</div><div class="k">provisioning bugs found &amp; fixed</div></div>
+  <div class="kpi live"><div class="n">2</div><div class="k">live surfaces (Console + Web)</div></div>
+</div>
+
+<h2>1. Platform &amp; Infrastructure <span class="b done">DONE</span></h2>
+<p class="muted">A shared managed-Kubernetes cluster + a dedicated Vault, ready to host many isolated tenants.</p>
+<ul class="checks">
+  <li>Managed Kubernetes cluster <code>datark-cluster</code> (NHN NKS, 4× m2.c16m32 = 64 vCPU / 128 GB, K8s v1.34.3)</li>
+  <li>Dedicated Vault node (<code>125.6.39.130</code>) — transit / AppRole / kv-v2, auto-unseal</li>
+  <li>Dynamic per-tenant block storage — Cinder CSI <code>nhn-block-ssd</code> (expandable)</li>
+  <li>Public entry — ingress-nginx + NHN LoadBalancer <code>133.186.214.160</code>, wildcard TLS <code>*.koneksi.co.kr</code></li>
+  <li>Image registry wired — NHN NCR (<code>koneksi-tech</code>) with per-namespace pull secrets</li>
+</ul>
+
+<h2>2. Automated Per-Tenant Onboarding <span class="b done">DONE</span></h2>
+<p class="muted">One action provisions a fully isolated DatArk stack for a client — namespace-per-tenant, tier-sized.</p>
+<div class="grid">
+  <div class="card"><h3>Full stack, per tenant</h3>
+    <p>Six cooperating services deployed into one namespace:</p>
+    <ul><li><b>kripfs</b> — decentralized storage (1–5 peered nodes)</li><li><b>backend</b> — application API (only public surface)</li><li><b>redis</b>, <b>mongodb</b>, <b>postgres</b> (TimescaleDB)</li><li><b>kripfs-db</b> — DB→kripfs backup daemon</li></ul></div>
+  <div class="card"><h3>Isolation &amp; secrets</h3>
+    <p>Every tenant gets its own:</p>
+    <ul><li>Kubernetes namespace + NetworkPolicy (default-deny) + ResourceQuota</li><li>Vault path, transit key &amp; AppRole</li><li>kripfs bearer, DB passwords, wildcard TLS</li><li>bootstrapped <b>admin account</b> for the developer</li></ul></div>
+  <div class="card"><h3>Three ways to onboard</h3>
+    <ul><li>Console <b>Onboard</b> button (name + tier)</li><li>GitHub Actions provisioning workflow</li><li><code>datark-provision.sh</code> (operator CLI)</li></ul></div>
+  <div class="card"><h3>Tiers &amp; data-safe upgrade</h3>
+    <p>free / starter / pro / enterprise. Upgrade grows kripfs (nodes + storage via online volume expansion) with <b>zero data loss</b>; databases stay fixed. <span class="muted">Verified free→pro live.</span></p></div>
+</div>
+
+<h2>3. Reliability — Bugs Found &amp; Fixed <span class="b done">DONE</span></h2>
+<p class="muted">Validating the full path surfaced three provisioning defects that would have broken every tenant — all fixed, plus a guardrail so they can't silently return.</p>
+<table>
+  <tr><th>#</th><th>Defect</th><th>Effect</th><th>Fix</th></tr>
+  <tr><td>1</td><td>Vault policy missing <code>datakey</code> grant</td><td>registration 403 (PII encryption)</td><td>added <code>transit/datakey/plaintext</code></td></tr>
+  <tr><td>2</td><td><code>IPFS_AUTHORIZATION</code> without <code>Bearer</code> prefix</td><td>upload 401 from kripfs</td><td>prefix corrected</td></tr>
+  <tr><td>3</td><td>Backend boots before datastores (race)</td><td>sessions broke → login loops</td><td><code>wait-for-datastores</code> initContainer</td></tr>
+</table>
+<p class="muted">Guardrail <code>assert_tenant_contract</code> now fails provisioning loudly if #1 or #2 ever regress.</p>
+
+<h2>4. Validated End-to-End <span class="b done">DONE</span></h2>
+<ul class="checks">
+  <li>Automated tenant provisioning via CI — 7 pods Running (T-01/02)</li>
+  <li>kripfs single-node + multi-node peering &amp; replication across tiers (T-03/04)</li>
+  <li><b>Upload → CID → download</b> byte-for-byte through the backend→kripfs path (T-05/06)</li>
+  <li>Bearer auth enforced — unauthorized request → 401 (T-06)</li>
+  <li>Backend ↔ Vault (AppRole) ↔ Postgres/Mongo/Redis connectivity (T-07)</li>
+  <li>Public HTTPS endpoint with valid TLS — <code>https://demo.koneksi.co.kr</code> (T-08)</li>
+  <li>Tier upgrade with data retained — PVCs unchanged (T-09)</li>
+  <li>Per-tenant isolation + clean deprovision/teardown (T-10/11)</li>
+</ul>
+
+<h2>5. Management Console <span class="b live">LIVE</span></h2>
+<p class="muted"><code>https://console.koneksi.co.kr</code> — operator UI on the datark cluster.</p>
+<ul class="checks">
+  <li>Login + dashboard KPI summary (tenants, health, nodes)</li>
+  <li>Tenant list &amp; click-through detail — endpoint, <b>kripfs bearer</b> (masked reveal/copy), <b>admin login</b> (masked reveal/copy)</li>
+  <li><b>Onboard</b> (name + tier), one-click <b>Upgrade plan</b>, <b>Destroy</b></li>
+  <li>Cluster nodes view</li>
+</ul>
+
+<h2>6. Web Frontend <span class="b live">LIVE</span></h2>
+<ul class="checks">
+  <li>DatArk web UI deployed on the datark cluster — <code>https://datark-poc.koneksi.co.kr</code></li>
+  <li>Pointed at the demo tenant backend (<code>demo.koneksi.co.kr</code>) via a dedicated image build</li>
+  <li>End-user login verified working against the demo tenant</li>
+</ul>
+
+<h2>7. Desktop Agent (DatArk Agent) <span class="b prog">IN PROGRESS</span></h2>
+<p class="muted">The desktop app is the "DatArk Agent" that performs client-side backup; a POC build was produced and is being finalized.</p>
+<ul class="checks">
+  <li>Dedicated POC build pipeline created (<code>Build NHN POC</code>) → app targets the demo tenant backend + POC web-app URL + separate release channel</li>
+  <li class="x">Login fix in review — root-caused a local-DB schema bug for the nhn backend; fix raised as a PR, pending merge + rebuild</li>
+  <li>Backend upgraded to match the app (<code>koneksi-backend:v0.1.0-staging</code>) — version-mismatch endpoints resolved</li>
+</ul>
+
+<h2>8. Documentation <span class="b done">DONE</span></h2>
+<ul class="checks">
+  <li>PoC Deliverables (A–D): infrastructure specs, deployment layout, test results, timeline</li>
+  <li>Consolidated full documentation, component wiring, provisioning runbook, technical assessment, specifications</li>
+</ul>
+
+<div class="note good"><b>Where we stand:</b> the <b>platform is complete and proven</b> — 11 of 12 PoC test cases PASS, and a client stack can be onboarded, upgraded, monitored, and torn down automatically, with upload/download verified. The remaining item is <b>T-12: application File DR via the DatArk Agent (desktop) + Console</b> — the storage layer it relies on is already proven; what's left is the Agent-driven backup/recovery flow, which is the desktop-app work currently in progress.</div>
+
+<h2>What's Next <span class="b pend">PENDING</span></h2>
+<ul class="checks">
+  <li class="x">Merge the desktop local-DB fix → rebuild the POC agent → complete login</li>
+  <li class="x">Run <b>T-12</b> end-to-end: Agent-driven backup → Console file inquiry → selective recovery → restart/network resilience</li>
+</ul>
+
+<div class="foot">
+  DatArk — accomplishments summary · 2026-07-16 · <code>datark-cluster</code> (NHN NKS, 4× m2.c16m32) + Vault <code>125.6.39.130</code> · Console <code>console.koneksi.co.kr</code> · Web <code>datark-poc.koneksi.co.kr</code>. Platform complete; application File DR (Agent + Console) in progress.
+</div>
+
+</div>
+</body>
+</html>

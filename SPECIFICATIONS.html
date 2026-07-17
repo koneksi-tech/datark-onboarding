@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DatArk Onboarding — Technical Specifications</title>
+<style>
+  :root{--bg:#f6f8fa;--card:#fff;--ink:#1f2328;--muted:#57606a;--line:#d0d7de;--accent:#1f6feb;--accent2:#8250df;--ok:#1a7f37;--warn:#9a6700;--chip:#eaeef2;--code:#f0f3f6;}
+  @media (prefers-color-scheme:dark){:root{--bg:#0d1117;--card:#161b22;--ink:#e6edf3;--muted:#8b949e;--line:#30363d;--accent:#58a6ff;--accent2:#bc8cff;--ok:#3fb950;--warn:#d29922;--chip:#21262d;--code:#0b0f14;}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:1040px;margin:0 auto;padding:32px 20px 80px;}
+  header.top{border-bottom:2px solid var(--line);padding-bottom:18px;margin-bottom:22px;}
+  h1{font-size:24px;margin:0 0 6px;}
+  h2{font-size:19px;margin:34px 0 10px;padding-top:10px;border-top:1px solid var(--line);}
+  h3{font-size:15.5px;margin:20px 0 6px;}
+  .sub{color:var(--muted);font-size:14px;}
+  code{background:var(--code);padding:1px 5px;border-radius:5px;font:12px ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-word;}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:11px 13px;overflow-x:auto;font:12px/1.5 ui-monospace,monospace;}
+  table{border-collapse:collapse;width:100%;margin:9px 0;font-size:12.8px;display:block;overflow-x:auto;}
+  th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top;}
+  th{background:var(--chip);font-weight:600;white-space:nowrap;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin:12px 0;}
+  .b{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;}
+  .ok{background:rgba(26,127,55,.15);color:var(--ok);} .int{background:rgba(130,80,223,.16);color:var(--accent2);} .pub{background:rgba(31,111,235,.14);color:var(--accent);}
+  .muted{color:var(--muted);} ul{margin:6px 0 6px 2px;padding-left:20px;} li{margin:3px 0;}
+  .toc a{color:var(--accent);text-decoration:none;margin-right:14px;font-size:13px;white-space:nowrap;}
+  /* architecture diagram */
+  .arch{margin:16px 0;}
+  .arch .client{max-width:320px;margin:0 auto;text-align:center;background:var(--card);border:1px solid var(--line);border-radius:9px;padding:9px 12px;font-size:12.5px;}
+  .arch .client b{font-size:13px;}
+  .arch .down{text-align:center;color:var(--muted);font-size:12px;margin:4px 0;}
+  .arch .down .lbl{font:11.5px ui-monospace,monospace;background:var(--code);padding:1px 6px;border-radius:5px;}
+  .arch .cluster{border:2px solid var(--accent);border-radius:14px;padding:18px 16px 16px;position:relative;margin-top:12px;}
+  .arch .cluster::before{content:"KUBERNETES CLUSTER · datark-cluster (NHN NKS)";position:absolute;top:-10px;left:18px;background:var(--bg);padding:0 8px;font-size:11px;font-weight:700;letter-spacing:.03em;color:var(--accent);}
+  .arch .shared{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;}
+  .arch .sbox{flex:1;min-width:150px;background:rgba(31,111,235,.07);border:1px solid var(--accent);border-radius:8px;padding:8px 11px;}
+  .arch .sbox b{display:block;font-size:12px;} .arch .sbox span{font:11px ui-monospace,monospace;color:var(--muted);}
+  .arch .tenants{display:flex;gap:14px;flex-wrap:wrap;}
+  .arch .ns{flex:1;min-width:270px;background:var(--bg);border:1.5px solid var(--accent2);border-radius:11px;padding:12px;position:relative;}
+  .arch .ns::before{content:"namespace";position:absolute;top:-9px;left:12px;background:var(--bg);padding:0 6px;font-size:10px;font-weight:700;color:var(--accent2);}
+  .arch .ns h4{margin:2px 0 9px;font-size:13px;color:var(--accent2);}
+  .arch .pubrow{background:rgba(31,111,235,.12);border:1px solid var(--accent);border-radius:8px;padding:8px 10px;font-size:12.5px;margin-bottom:9px;display:flex;justify-content:space-between;align-items:center;gap:6px;}
+  .arch .tag{font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:10px;}
+  .arch .tag.pub{background:var(--accent);color:#fff;} .arch .tag.int{background:var(--accent2);color:#fff;}
+  .arch .intgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+  .arch .svc{background:var(--card);border:1px solid var(--line);border-radius:7px;padding:6px 9px;font-size:11.5px;}
+  .arch .svc .t{font-weight:600;} .arch .svc .d{color:var(--muted);font-size:10px;}
+  .arch .conn{font-size:10.5px;color:var(--muted);text-align:center;margin:5px 0 3px;}
+  .arch .legend{margin-top:14px;font-size:11.5px;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap;}
+  .arch .legend b{color:var(--ink);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <span class="b pub">SPECIFICATIONS</span>
+  <h1>DatArk Onboarding — Technical Specifications</h1>
+  <p class="sub">Complete spec for the per-tenant DatArk deployment on NHN: prerequisites, images, component specs, shared Vault, and application environment. As of 2026-07-13.</p>
+  <p class="toc">
+    <a href="#arch">1. Architecture</a><a href="#prereq">2. Prerequisites</a><a href="#images">3. Images</a>
+    <a href="#comp">4. Components</a><a href="#tiers">5. Tiers</a><a href="#vault">6. Vault</a><a href="#env">7. App env</a><a href="#net">8. Endpoints</a>
+  </p>
+</header>
+
+<h2 id="arch">1. Architecture overview</h2>
+<p class="muted">A shared Kubernetes cluster + a shared Vault. Each client gets a fully isolated stack in its own namespace <code>tenant-&lt;client&gt;</code>. Only the backend is public; kripfs and the datastores are internal.</p>
+
+<div class="arch">
+  <div class="client"><b>👤 Client / browser</b></div>
+  <div class="down">│&nbsp; <span class="lbl">https://&lt;client&gt;.koneksi.co.kr</span> &nbsp;▼</div>
+
+  <div class="cluster">
+    <!-- shared infra -->
+    <div class="shared">
+      <div class="sbox"><b>🌐 ingress-nginx + LB</b><span>133.186.214.160 · *.koneksi.co.kr TLS</span></div>
+      <div class="sbox"><b>🔐 Vault (shared)</b><span>125.6.39.130:8200 · transit/approle/kv</span></div>
+      <div class="sbox"><b>📦 NCR registry</b><span>…nhncloud.com/koneksi-tech</span></div>
+      <div class="sbox"><b>💾 StorageClass</b><span>nhn-block-ssd (Cinder)</span></div>
+    </div>
+
+    <!-- per-tenant namespaces -->
+    <div class="tenants">
+      <div class="ns">
+        <h4>tenant-A</h4>
+        <div class="pubrow"><span><b>backend</b> · API</span><span class="tag pub">PUBLIC ▲ ingress</span></div>
+        <div class="conn">backend ──► internal services ▼ &nbsp;·&nbsp; backend ──► Vault (transit)</div>
+        <div class="intgrid">
+          <div class="svc"><span class="t">kripfs</span> <span class="tag int">INT</span><div class="d">storage · 1/3/5 nodes · :8080</div></div>
+          <div class="svc"><span class="t">postgres</span> <span class="tag int">INT</span><div class="d">TimescaleDB · :5432</div></div>
+          <div class="svc"><span class="t">mongodb</span> <span class="tag int">INT</span><div class="d">metadata · :27017</div></div>
+          <div class="svc"><span class="t">redis</span> <span class="tag int">INT</span><div class="d">cache/queue · :6379</div></div>
+        </div>
+        <div class="conn" style="margin-top:8px">+ Secret · ConfigMap · NetworkPolicy · ResourceQuota</div>
+      </div>
+
+      <div class="ns">
+        <h4>tenant-B</h4>
+        <div class="pubrow"><span><b>backend</b> · API</span><span class="tag pub">PUBLIC ▲ ingress</span></div>
+        <div class="conn">…same shape, fully isolated…</div>
+        <div class="intgrid">
+          <div class="svc"><span class="t">kripfs</span> <span class="tag int">INT</span><div class="d">own bearer + peers</div></div>
+          <div class="svc"><span class="t">postgres</span> <span class="tag int">INT</span><div class="d">own password</div></div>
+          <div class="svc"><span class="t">mongodb</span> <span class="tag int">INT</span><div class="d">own password</div></div>
+          <div class="svc"><span class="t">redis</span> <span class="tag int">INT</span><div class="d">own password</div></div>
+        </div>
+        <div class="conn" style="margin-top:8px">own Vault path + transit key</div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span><span class="tag pub">PUBLIC</span> reachable at the client subdomain (HTTPS)</span>
+      <span><span class="tag int">INT</span> internal ClusterIP only — never public</span>
+    </div>
+  </div>
+</div>
+
+<h2 id="prereq">2. Prerequisites — pre-setup needed (shared, one-time)</h2>
+
+<h3>2.1 Kubernetes cluster — where the application is deployed</h3>
+<table>
+  <tr><th>Item</th><th>Value</th></tr>
+  <tr><td>Provider / type</td><td>NHN Cloud NKS (managed Kubernetes)</td></tr>
+  <tr><td>Cluster name</td><td><code>datark-cluster</code></td></tr>
+  <tr><td>Kubernetes version</td><td>v1.34.3</td></tr>
+  <tr><td>Worker nodes</td><td>4 × (16 vCPU / 32 GB RAM)</td></tr>
+  <tr><td>StorageClass (default)</td><td><code>nhn-block-ssd</code> — provisioner <code>cinder.csi.openstack.org</code>, type “General SSD”, WaitForFirstConsumer, expandable</td></tr>
+  <tr><td>Ingress</td><td>ingress-nginx; IngressClass <code>nginx</code> (default)</td></tr>
+  <tr><td>LoadBalancer (public)</td><td><code>133.186.214.160</code> — DNS target for all tenant hosts</td></tr>
+  <tr><td>Kubeconfig</td><td>GitHub secret <code>KUBE_CONFIG</code> (for the provisioning workflow)</td></tr>
+</table>
+
+<h3>2.2 Vault — shared, dedicated to this environment</h3>
+<table>
+  <tr><th>Item</th><th>Value</th></tr>
+  <tr><td>Address</td><td><code>http://125.6.39.130:8200</code> (separate from prod koneksi Vault)</td></tr>
+  <tr><td>Version / storage</td><td>HashiCorp Vault 2.0.3, Raft (single node; expandable to 3-node HA)</td></tr>
+  <tr><td>Engines</td><td><code>transit</code> · <code>approle</code> · <code>kv-v2</code> at <code>secret/</code></td></tr>
+  <tr><td>Provisioner auth</td><td>token with policy <code>datark-provisioner</code> (GitHub secret <code>VAULT_TOKEN</code>)</td></tr>
+  <tr><td>Auto-unseal</td><td>root cron every minute (survives reboot)</td></tr>
+  <tr><td>Ports</td><td>8200 (API, from K8s + operator) · 8201 (Raft, node-to-node only)</td></tr>
+</table>
+
+<h3>2.3 Image registry &amp; TLS &amp; DNS</h3>
+<table>
+  <tr><th>Item</th><th>Value</th></tr>
+  <tr><td>Container registry (NCR)</td><td><code>36163004-kr1-registry.container.nhncloud.com</code> (project <code>koneksi-tech</code>)</td></tr>
+  <tr><td>Pull secret</td><td><code>ncr-regcred</code> (dockerconfigjson) — created per namespace; GitHub secret <code>NCR_DOCKERCONFIG</code></td></tr>
+  <tr><td>TLS certificate</td><td><code>*.koneksi.co.kr</code> (covers <code>&lt;client&gt;.koneksi.co.kr</code>); GitHub secrets <code>TLS_FULLCHAIN</code> + <code>TLS_KEY</code></td></tr>
+  <tr><td>DNS</td><td>per-tenant A record <code>&lt;client&gt;.koneksi.co.kr → 133.186.214.160</code></td></tr>
+</table>
+
+<h2 id="images">3. Container images — name &amp; location</h2>
+<table>
+  <tr><th>Component</th><th>Image</th><th>Source / build</th></tr>
+  <tr><td><b>kripfs</b></td><td><code>36163004-kr1-registry.container.nhncloud.com/koneksi-tech/kipfs:v0.0.1</code></td><td>NCR — built by kripfs repo workflow <code>kipfs-image-nhn.yml</code> on <code>vX.X.X</code> tags</td></tr>
+  <tr><td><b>backend</b></td><td><code>36163004-kr1-registry.container.nhncloud.com/koneksi-tech/koneksi-backend:v0.0.2</code></td><td>NCR (koneksi-tech) — needs <code>ncr-regcred</code> to pull</td></tr>
+  <tr><td><b>redis</b></td><td><code>redis:7-alpine</code></td><td>Docker Hub (public)</td></tr>
+  <tr><td><b>mongodb</b></td><td><code>mongo:7</code></td><td>Docker Hub (public)</td></tr>
+  <tr><td><b>postgres</b></td><td><code>timescale/timescaledb:2.17.2-pg16</code></td><td>Docker Hub (public) — TimescaleDB required by backend</td></tr>
+</table>
+
+<h2 id="comp">4. Component specifications (per tenant)</h2>
+
+<h3>4.1 kripfs — decentralized storage nodes</h3>
+<table>
+  <tr><th>Attribute</th><th>Spec</th></tr>
+  <tr><td>Workload</td><td>StatefulSet + headless Service (peering) + ClusterIP Service</td></tr>
+  <tr><td>Nodes (replicas)</td><td>tier-driven: free/starter 1 · pro 3 · enterprise 5</td></tr>
+  <tr><td>Replication factor</td><td>free/starter 1 · pro 2 · enterprise 3</td></tr>
+  <tr><td>Ports</td><td>8080 gateway (API + upload/download) · 4001 swarm (libp2p) · 5001 api</td></tr>
+  <tr><td>Storage (per pod PVC)</td><td>free 2Gi · starter 10Gi · pro 50Gi · enterprise 200Gi (blocks + identity + state at <code>/data</code>)</td></tr>
+  <tr><td>Resources</td><td>see tier matrix (§5)</td></tr>
+  <tr><td>Auth</td><td>bearer token (<code>koneksi_static_bearer</code>); uploads/downloads require <code>Authorization: Bearer</code></td></tr>
+  <tr><td>Exposure</td><td><span class="b int">INTERNAL</span> ClusterIP only — reached by the backend, never public</td></tr>
+  <tr><td>Endpoints</td><td>Upload <code>POST /api/v0/add</code> · Download <code>GET /ipfs/&lt;CID&gt;</code> · Health <code>GET /health</code></td></tr>
+  <tr><td>Init</td><td>root initContainer generates <code>config.json</code> (cluster_peers via headless DNS) + chowns the data volume</td></tr>
+</table>
+
+<h3>4.2 backend — application API</h3>
+<table>
+  <tr><th>Attribute</th><th>Spec</th></tr>
+  <tr><td>Workload</td><td>Deployment (1 replica) + Service + Ingress</td></tr>
+  <tr><td>Port</td><td>3000 (container) → 80 (service) → 443 (ingress TLS)</td></tr>
+  <tr><td>Resources</td><td>requests 250m / 512Mi · limits 1 CPU / 1Gi (fixed across tiers)</td></tr>
+  <tr><td>Health</td><td><code>GET /check-health</code> (readiness); no liveness probe</td></tr>
+  <tr><td>Rollout</td><td>RollingUpdate, maxSurge 0 (fits ResourceQuota)</td></tr>
+  <tr><td>Depends on</td><td>kripfs, redis, mongodb, postgres (in-namespace DNS) + Vault (transit)</td></tr>
+  <tr><td>Exposure</td><td><span class="b pub">PUBLIC</span> <code>https://&lt;client&gt;.koneksi.co.kr</code></td></tr>
+</table>
+
+<h3>4.3 redis · 4.4 mongodb · 4.5 postgres — datastores</h3>
+<table>
+  <tr><th>Component</th><th>Workload</th><th>Port</th><th>Resources (req → lim)</th><th>Storage (tier)</th><th>Exposure</th></tr>
+  <tr><td><b>redis</b></td><td>Deployment</td><td>6379</td><td>100m/128Mi → 250m/256Mi</td><td>ephemeral (cache)</td><td><span class="b int">INTERNAL</span></td></tr>
+  <tr><td><b>mongodb</b></td><td>StatefulSet</td><td>27017</td><td>250m/512Mi → 500m/1Gi</td><td>free 1 · starter 5 · pro 20 · ent 100 Gi</td><td><span class="b int">INTERNAL</span></td></tr>
+  <tr><td><b>postgres</b></td><td>StatefulSet</td><td>5432</td><td>250m/256Mi → 500m/512Mi</td><td>free 1 · starter 5 · pro 20 · ent 50 Gi</td><td><span class="b int">INTERNAL</span></td></tr>
+</table>
+<p class="muted">redis: <code>--requirepass</code> from Vault. mongodb: root user <code>root</code> + password from Vault. postgres: user <code>postgres</code>, db <code>koneksi</code>, <code>shared_preload_libraries=timescaledb</code>.</p>
+
+<h2 id="tiers">5. Tier resource matrix</h2>
+<table>
+  <tr><th>Tier</th><th>kripfs nodes</th><th>Repl.</th><th>kripfs res (req→lim)</th><th>kripfs disk</th><th>mongo disk</th><th>pg disk</th><th>Namespace quota (CPU / Mem / Storage)</th></tr>
+  <tr><td>free</td><td>1</td><td>1</td><td>100m/256Mi → 250m/512Mi</td><td>2Gi</td><td>1Gi</td><td>1Gi</td><td>3 / 5Gi / 10Gi</td></tr>
+  <tr><td>starter</td><td>1</td><td>1</td><td>250m/512Mi → 500m/1Gi</td><td>10Gi</td><td>5Gi</td><td>5Gi</td><td>4 / 8Gi / 50Gi</td></tr>
+  <tr><td>pro</td><td>3</td><td>2</td><td>500m/1Gi → 1/2Gi</td><td>50Gi</td><td>20Gi</td><td>20Gi</td><td>12 / 24Gi / 250Gi</td></tr>
+  <tr><td>enterprise</td><td>5</td><td>3</td><td>1/2Gi → 2/4Gi</td><td>200Gi</td><td>100Gi</td><td>50Gi</td><td>24 / 48Gi / 1200Gi</td></tr>
+</table>
+<p class="muted">backend/redis/mongo/postgres compute resources are fixed across tiers; only kripfs (nodes + resources + disk) and storage sizes + quota scale by tier.</p>
+
+<h2 id="vault">6. Shared Vault — per-tenant layout</h2>
+<table>
+  <tr><th>Vault object</th><th>Path / name</th><th>Contents / purpose</th></tr>
+  <tr><td>Per-tenant KV</td><td><code>secret/datark/tenants/&lt;client&gt;</code></td><td>kripfs_cluster_secret, kripfs_static_bearer, mongo_pass, redis_pass, postgres_pass, app_key, jwt_secret</td></tr>
+  <tr><td>Shared platform KV</td><td><code>secret/datark/shared</code></td><td>SPACES_*, POSTMARK_*, PORTONE_*, PROVENANCE_* (same for all tenants)</td></tr>
+  <tr><td>Transit key</td><td><code>transit/keys/datark-&lt;client&gt;</code></td><td>per-tenant PII encryption (backend uses via AppRole)</td></tr>
+  <tr><td>Policy</td><td><code>datark-tenant-&lt;client&gt;</code></td><td>read own KV + shared; encrypt/decrypt own transit key</td></tr>
+  <tr><td>AppRole</td><td><code>auth/approle/role/datark-&lt;client&gt;</code></td><td>backend runtime auth → role_id + secret_id</td></tr>
+</table>
+
+<h2 id="env">7. Application environment — shared env used by the backend</h2>
+<p class="muted">The backend loads all env via <code>envFrom</code>: a ConfigMap (non-secret) + a Secret (materialized from Vault). Source key: <code>cfg</code>=ConfigMap · <code>V:tenant</code>=per-tenant Vault · <code>V:shared</code>=shared Vault · <code>dns</code>=in-namespace service.</p>
+
+<h3>7.1 ConfigMap — non-secret env (<code>&lt;client&gt;-backend-config</code>)</h3>
+<table>
+  <tr><th>Key</th><th>Value (example: demo)</th><th>Source</th></tr>
+  <tr><td>NODE_ENV / MODE / PORT</td><td>production / release / 3000</td><td>cfg</td></tr>
+  <tr><td>IPFS_NODE_URL / IPFS_DOWNLOAD_URL</td><td><code>http://&lt;client&gt;-kripfs.tenant-&lt;client&gt;.svc.cluster.local:8080</code></td><td>dns</td></tr>
+  <tr><td>REDIS_HOST / REDIS_PORT / REDIS_PREFIX</td><td><code>&lt;client&gt;-redis…svc</code> / 6379 / KONEKSI</td><td>dns / cfg</td></tr>
+  <tr><td>MONGO_DATABASE</td><td>koneksi</td><td>cfg</td></tr>
+  <tr><td>POSTGRES_HOST / PORT / USER / DB / SSL_MODE</td><td><code>&lt;client&gt;-postgres…svc</code> / 5432 / postgres / koneksi / disable</td><td>dns / cfg</td></tr>
+  <tr><td>VAULT_ADDR</td><td><code>http://125.6.39.130:8200</code></td><td>cfg</td></tr>
+  <tr><td>VAULT_TRANSIT_MOUNT / VAULT_TRANSIT_KEY</td><td>transit / <code>datark-&lt;client&gt;</code></td><td>cfg</td></tr>
+  <tr><td>VAULT_TLS_SKIP_VERIFY / VAULT_DEK_CACHE_TTL_SECONDS / VAULT_NAMESPACE</td><td>false / 300 / (empty)</td><td>cfg</td></tr>
+  <tr><td>WEB_APP_URL</td><td><code>https://&lt;client&gt;.koneksi.co.kr</code></td><td>cfg</td></tr>
+  <tr><td>POSTMARK_FROM / IP_ADDRESS_HEADER</td><td>no-reply@koneksi.co.kr / X-Forwarded-For</td><td>cfg</td></tr>
+</table>
+
+<h3>7.2 Secret — secret env (<code>&lt;client&gt;-secret</code>)</h3>
+<table>
+  <tr><th>Key</th><th>Purpose</th><th>Source</th></tr>
+  <tr><td>APP_KEY, JWT_SECRET</td><td>app crypto / auth tokens</td><td>V:tenant</td></tr>
+  <tr><td>IPFS_AUTHORIZATION</td><td>bearer to kripfs (== KIPFS_STATIC_BEARER)</td><td>V:tenant</td></tr>
+  <tr><td>KIPFS_CLUSTER_SECRET, KIPFS_STATIC_BEARER</td><td>kripfs peer trust + gateway bearer</td><td>V:tenant</td></tr>
+  <tr><td>MONGO_PASSWORD, MONGO_CONNECTION_STRING</td><td>mongo auth + DSN</td><td>V:tenant + dns</td></tr>
+  <tr><td>REDIS_PASSWORD</td><td>redis auth</td><td>V:tenant</td></tr>
+  <tr><td>POSTGRES_PASSWORD</td><td>postgres auth</td><td>V:tenant</td></tr>
+  <tr><td>VAULT_ROLE_ID, VAULT_SECRET_ID</td><td>backend → Vault AppRole login</td><td>V:tenant (AppRole)</td></tr>
+  <tr><td>SPACES_KEY, SPACES_SECRET, SPACES_REGION, SPACES_BUCKET, SPACES_ENDPOINT</td><td>object storage (DO Spaces)</td><td>V:shared</td></tr>
+  <tr><td>PORTONE_SECRET_KEY, PORTONE_WEBHOOK_SECRET, PORTONE_INICIS_MONTHLY_CHANNEL_KEY, PORTONE_INICIS_YEARLY_CHANNEL_KEY, PORTONE_PAYPAL_CHANNEL_KEY, PORTONE_STORE_ID, PORTONE_MODE</td><td>payments</td><td>V:shared</td></tr>
+  <tr><td>POSTMARK_API_KEY, POSTMARK_FROM</td><td>email</td><td>V:shared</td></tr>
+  <tr><td>PROVENANCE_SERVICE_TOKEN, PROVENANCE_SERVICE_URL</td><td>data-provenance service</td><td>V:shared</td></tr>
+</table>
+
+<h2 id="net">8. Endpoints &amp; networking</h2>
+<table>
+  <tr><th>Target</th><th>Address</th><th>Scope</th></tr>
+  <tr><td>Tenant backend (client-facing)</td><td><code>https://&lt;client&gt;.koneksi.co.kr</code> → LB 133.186.214.160</td><td><span class="b pub">PUBLIC</span></td></tr>
+  <tr><td>kripfs gateway</td><td><code>http://&lt;client&gt;-kripfs.tenant-&lt;client&gt;.svc.cluster.local:8080</code></td><td><span class="b int">INTERNAL</span></td></tr>
+  <tr><td>mongodb</td><td><code>&lt;client&gt;-mongo.tenant-&lt;client&gt;.svc:27017</code></td><td><span class="b int">INTERNAL</span></td></tr>
+  <tr><td>postgres</td><td><code>&lt;client&gt;-postgres.tenant-&lt;client&gt;.svc:5432</code></td><td><span class="b int">INTERNAL</span></td></tr>
+  <tr><td>redis</td><td><code>&lt;client&gt;-redis.tenant-&lt;client&gt;.svc:6379</code></td><td><span class="b int">INTERNAL</span></td></tr>
+  <tr><td>Vault (shared)</td><td><code>http://125.6.39.130:8200</code></td><td>from cluster + operator</td></tr>
+</table>
+<p class="muted">Isolation: a per-namespace NetworkPolicy (default-deny + same-namespace + ingress-controller) and a ResourceQuota. Only the backend is public; all datastores + kripfs are ClusterIP internal.</p>
+
+<div class="foot" style="margin-top:36px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;">
+  DatArk technical specifications · 2026-07-13 · datark-cluster (NKS) + shared Vault 125.6.39.130 · chart <code>chart/datark-tenant</code>.
+</div>
+
+</div>
+</body>
+</html>

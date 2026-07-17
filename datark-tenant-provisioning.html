@@ -67,12 +67,15 @@
 <div class="wrap">
 
 <header class="top">
-  <span class="badge b1">DESIGN / PLANNING</span>
+  <span class="badge b1">DESIGN · IMPLEMENTED</span>
   <span class="badge b2">Approach B · Helm + Bash</span>
   <span class="badge">v0.4 · 2026-07-08 · +per-tenant Postgres</span>
   <h1>DatArk Marketplace Provisioning</h1>
-  <p class="sub">On-demand, per-tenant provisioning of an isolated DatArk stack — <b>kripfs</b> (pods) + <b>backend</b> + <b>redis</b> + <b>mongodb</b> — onto a shared Kubernetes cluster. A bash entrypoint drives a single Helm chart; the marketplace "buy" button calls that script later.</p>
+  <p class="sub">On-demand, per-tenant provisioning of an isolated DatArk stack — <b>kripfs</b> (pods) + <b>backend</b> + <b>redis</b> + <b>mongodb</b> + <b>postgres</b> — onto a shared Kubernetes cluster. A bash entrypoint drives a single Helm chart; the marketplace "buy" button calls that script later.</p>
 </header>
+
+<div class="card" style="border-left:4px solid var(--ok);background:rgba(26,127,55,.06);">
+  <b>✅ This design is now IMPLEMENTED and live-tested.</b> All 5 components (incl. kripfs image <code>kipfs:v0.0.1</code>) run in pods across all tiers; provisioning is automated via a GitHub Actions workflow; tenants are reachable over valid TLS at <code>&lt;client&gt;.koneksi.co.kr</code>. This page is the original design record — for current state see <b>STATUS.html</b>, <b>SPECIFICATIONS.html</b>, and <b>PROVISIONING-RUNBOOK.html</b>. (Tenant domain is <code>koneksi.co.kr</code>, not the earlier <code>datark.koneksi.co.kr</code> placeholder.)</div>
 
 <div class="card tldr">
   <b>TL;DR</b>
@@ -80,7 +83,7 @@
     <li><b>Model:</b> one shared cluster, <b>namespace per tenant</b>. Each purchase = one namespace holding that tenant's full stack.</li>
     <li><b>Mechanism:</b> a bash wrapper (<code>datark-provision.sh</code>) calls <code>helm upgrade --install</code> on a single <code>datark-tenant</code> chart. <b>Tiers are Helm values files.</b></li>
     <li><b>Input:</b> only <code>--tenant &lt;id&gt;</code> + <code>--tier &lt;starter|pro|enterprise&gt;</code>, plus a kube-admin context. Nothing else.</li>
-    <li><b>Access:</b> per-tenant subdomain <code>&lt;id&gt;.datark.koneksi.co.kr</code> via shared ingress-nginx + wildcard TLS. kripfs/redis/mongo stay internal.</li>
+    <li><b>Access:</b> per-tenant subdomain <code>&lt;id&gt;.koneksi.co.kr</code> via shared ingress-nginx + wildcard TLS. kripfs/redis/mongo stay internal.</li>
     <li><b>Teardown:</b> <code>datark-deprovision.sh &lt;id&gt;</code> → <code>helm uninstall</code> + delete namespace (and PVCs). Clean and total.</li>
     <li><b>Blockers to clear first:</b> kripfs pod image, per-tenant backend manifests, and a <span class="danger">default StorageClass</span> (hard blocker — stateful pods can't run without it).</li>
   </ul>
@@ -92,7 +95,7 @@
 <div class="diagram">
   <div class="cluster">
     <div class="shared-row">
-      <div class="shared"><b>ingress-nginx</b> + wildcard TLS<br><span class="kv">*.datark.koneksi.co.kr</span> <span class="ok">READY</span></div>
+      <div class="shared"><b>ingress-nginx</b> + wildcard TLS<br><span class="kv">*.koneksi.co.kr</span> <span class="ok">READY</span></div>
       <div class="shared"><b>StorageClass</b> (dynamic PVCs)<br><span class="warn">TO CONFIRM</span></div>
       <div class="shared"><b>HashiCorp Vault</b> (dedicated to this env)<br><span class="kv">${VAULT_ADDR}</span> <span class="warn">YOU PROVIDE</span></div>
       <div class="shared"><b>NCR pull secret</b> + Helm/kubeconfig<br><span class="kv">operator side</span></div>
@@ -107,7 +110,7 @@
         <div class="pod"><span class="k">postgres</span><span class="v">StatefulSet + PVC + ClusterIP</span></div>
         <div class="pod"><span class="k">secrets</span><span class="v">generated per-tenant</span></div>
         <div class="pod"><span class="k">policy</span><span class="v">NetworkPolicy + ResourceQuota</span></div>
-        <div class="kv" style="margin-top:6px">Ingress → abc.datark.koneksi.co.kr</div>
+        <div class="kv" style="margin-top:6px">Ingress → abc.koneksi.co.kr</div>
       </div>
       <div class="ns">
         <h4>namespace: tenant-xyz &nbsp;<span class="kv">(tier: starter)</span></h4>
@@ -116,7 +119,7 @@
         <div class="pod"><span class="k">redis</span><span class="v">Deployment + ClusterIP</span></div>
         <div class="pod"><span class="k">mongodb</span><span class="v">StatefulSet + PVC + ClusterIP</span></div>
         <div class="pod"><span class="k">postgres</span><span class="v">StatefulSet + PVC + ClusterIP</span></div>
-        <div class="kv" style="margin-top:6px">Ingress → xyz.datark.koneksi.co.kr</div>
+        <div class="kv" style="margin-top:6px">Ingress → xyz.koneksi.co.kr</div>
       </div>
     </div>
   </div>
@@ -179,7 +182,7 @@
   <div class="arrow">▼</div>
   <div class="step"><h4>Verify (definition of done)</h4><p>kripfs <code>/health</code> = 200 on each pod; each pod's <code>cluster_peers</code> lists the right peers; a test upload to one node is retrievable from another (replication proof); backend answers through its Ingress.</p></div>
   <div class="arrow">▼</div>
-  <div class="step ok2"><h4>Output access details</h4><p>Print/return JSON: <span class="kv">url=https://abc.datark.koneksi.co.kr</span>, admin bearer, tier, node count. This is what the marketplace hands the client.</p></div>
+  <div class="step ok2"><h4>Output access details</h4><p>Print/return JSON: <span class="kv">url=https://abc.koneksi.co.kr</span>, admin bearer, tier, node count. This is what the marketplace hands the client.</p></div>
   <div class="arrow">▼</div>
   <div class="step fail"><h4>On any failure → rollback</h4><p>Trap: <code>helm rollback</code> (upgrade) or <code>helm uninstall</code> + <code>kubectl delete ns</code> (fresh create) so a half-provisioned tenant never lingers. Exit non-zero with the failing step.</p></div>
 </div>
@@ -218,7 +221,7 @@
 │       ├── kripfs-config.yaml           # cluster_peers rendered from replica count
 │       ├── backend-deploy.yaml
 │       ├── backend-svc.yaml
-│       ├── backend-ingress.yaml         # &lt;id&gt;.datark.koneksi.co.kr
+│       ├── backend-ingress.yaml         # &lt;id&gt;.koneksi.co.kr
 │       ├── redis.yaml
 │       ├── mongo-statefulset.yaml
 │       ├── mongo-svc.yaml
@@ -326,7 +329,7 @@ Because all three come from the <b>same per-tenant Vault KV path</b>, they line 
 <h2>9. Prerequisites &amp; blockers</h2>
 <table>
   <tr><th>Prerequisite</th><th>Status</th><th>Owner / action</th></tr>
-  <tr><td>ingress-nginx + wildcard <code>*.datark.koneksi.co.kr</code> DNS + TLS</td><td class="ok">READY</td><td>—</td></tr>
+  <tr><td>ingress-nginx + wildcard <code>*.koneksi.co.kr</code> DNS + TLS</td><td class="ok">READY</td><td>—</td></tr>
   <tr><td><b>Default StorageClass</b> (dynamic PVCs)</td><td class="danger">HARD BLOCKER — confirm</td><td>Without it, kripfs + mongo cannot run. Verify/enable on the target cluster.</td></tr>
   <tr><td>kripfs pod-ready image in NCR</td><td class="warn">TO BUILD</td><td>Image reading config.json/env; Dockerfile exists in kripfs repo. Separate CI task.</td></tr>
   <tr><td>backend image + per-tenant manifests</td><td class="warn">ADAPT</td><td>Adapt existing staging kustomize into the chart's backend templates.</td></tr>
@@ -369,7 +372,7 @@ Because all three come from the <b>same per-tenant Vault KV path</b>, they line 
 </table>
 
 <div class="foot">
-  DatArk Marketplace Provisioning — design v0.4 · 2026-07-08 · +per-tenant Postgres · Approach B (Helm + Bash) · namespace-per-tenant · planning only, nothing deployed.<br>
+  DatArk Marketplace Provisioning — design v0.4 · 2026-07-08 · +per-tenant Postgres · Approach B (Helm + Bash) · namespace-per-tenant · implemented — see STATUS.html & SPECIFICATIONS.html for current state.<br>
   Related prior art: <code>ansible-plan/</code> (VM/Docker kripfs peering), <code>nhn-cloud-onboarding-infra/</code> (DatArk PoC), staging <code>koneksi-backend</code> kustomize.
 </div>
 

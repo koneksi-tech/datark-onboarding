@@ -244,7 +244,8 @@ async function renderTenant(){
   shell(`<button class="back" onclick="go('dashboard')">← Tenants</button>
     <div class="top"><div class="h">${d.name} <span class="tag">${d.tier||'—'}</span> <span class="muted" style="font-size:13px">· ${d.namespace}</span></div>
       <button class="btn" onclick="openUpgrade('${d.name}','${d.tier||''}')">⬆ Upgrade plan</button></div>
-    <div class="ecard"><b>Endpoint</b> ${d.endpoint?`<span class="dot green"></span><a class="lnk" href="${d.endpoint}" target="_blank">${d.endpoint}</a>`:'<span class="muted">—</span>'}</div>
+    <div class="ecard"><b>Backend API</b> ${d.endpoint?`<span class="dot green"></span><a class="lnk" href="${d.endpoint}" target="_blank">${d.endpoint}</a>`:'<span class="muted">—</span>'}</div>
+    <div class="ecard"><b>kripfs cluster endpoint</b> ${d.clusterEndpoint?`<span class="dot green"></span><a class="lnk" href="${d.clusterEndpoint}" target="_blank">${d.clusterEndpoint}</a>`:'<span class="muted">— (not exposed / no DNS)</span>'}</div>
     ${bearerCard}
     ${adminCard}
     <table><thead><tr><th>WORKLOAD</th><th>KIND</th><th>READY</th></tr></thead>

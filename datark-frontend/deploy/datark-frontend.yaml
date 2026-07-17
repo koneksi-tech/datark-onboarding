@@ -47,7 +47,7 @@ spec:
         - name: ncr-regcred
       containers:
         - name: frontend
-          image: 36163004-kr1-registry.container.nhncloud.com/koneksi-tech/koneksi-frontend:v0.0.3
+          image: 36163004-kr1-registry.container.nhncloud.com/koneksi-tech/koneksi-frontend:v0.0.1-datark
           imagePullPolicy: Always
           ports:
             - { name: http, containerPort: 80 }

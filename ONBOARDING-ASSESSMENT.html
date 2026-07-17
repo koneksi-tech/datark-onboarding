@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DatArk Onboarding — Technical Assessment</title>
+<style>
+  :root{--bg:#f6f8fa;--card:#fff;--ink:#1f2328;--muted:#57606a;--line:#d0d7de;--accent:#1f6feb;--accent2:#8250df;--ok:#1a7f37;--warn:#9a6700;--danger:#cf222e;--chip:#eaeef2;--code:#f0f3f6;}
+  @media (prefers-color-scheme:dark){:root{--bg:#0d1117;--card:#161b22;--ink:#e6edf3;--muted:#8b949e;--line:#30363d;--accent:#58a6ff;--accent2:#bc8cff;--ok:#3fb950;--warn:#d29922;--danger:#f85149;--chip:#21262d;--code:#0b0f14;}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:920px;margin:0 auto;padding:32px 20px 80px;}
+  header.top{border-bottom:2px solid var(--line);padding-bottom:18px;margin-bottom:22px;}
+  h1{font-size:24px;margin:0 0 6px;}
+  h2{font-size:20px;margin:34px 0 10px;padding-top:12px;border-top:2px solid var(--line);}
+  h3{font-size:16px;margin:20px 0 6px;}
+  .sub{color:var(--muted);font-size:14px;}
+  code{background:var(--code);padding:1px 5px;border-radius:5px;font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace;}
+  table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13.2px;display:block;overflow-x:auto;}
+  th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top;}
+  th{background:var(--chip);font-weight:600;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0;}
+  .tldr{border-left:4px solid var(--accent);background:rgba(31,111,235,.06);}
+  .verdict{border-left:4px solid var(--ok);background:rgba(26,127,55,.06);}
+  .myth{border-left:4px solid var(--warn);background:rgba(154,103,0,.06);}
+  ul{margin:8px 0 8px 2px;padding-left:20px;} li{margin:4px 0;}
+  .muted{color:var(--muted);} b.ok{color:var(--ok);} b.no{color:var(--danger);}
+  .big{font-size:16px;}
+  /* expectation vs reality visual */
+  .vs{display:flex;gap:16px;flex-wrap:wrap;margin:18px 0;}
+  .vs .panel{flex:1;min-width:290px;border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--card);}
+  .vs .exp{border-top:4px solid var(--warn);} .vs .real{border-top:4px solid var(--ok);}
+  .vs h4{margin:0 0 2px;font-size:14.5px;}
+  .vs .tg{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;}
+  .vs .exp .tg{background:rgba(154,103,0,.16);color:var(--warn);} .vs .real .tg{background:rgba(26,127,55,.15);color:var(--ok);}
+  .imgbox{margin:16px auto;max-width:230px;text-align:center;background:rgba(154,103,0,.07);border:2px dashed var(--warn);border-radius:10px;padding:20px 10px;}
+  .imgbox .big2{font-size:15px;font-weight:700;} .imgbox .x{color:var(--danger);font-weight:700;margin-top:10px;font-size:12px;}
+  .arrowd{text-align:center;color:var(--muted);font-size:13px;margin:6px 0;}
+  .nsbox{border:1.5px solid var(--accent2);border-radius:10px;padding:11px;position:relative;margin-top:10px;}
+  .nsbox::before{content:"one isolated namespace per client";position:absolute;top:-9px;left:10px;background:var(--card);padding:0 6px;font-size:10px;font-weight:700;color:var(--accent2);}
+  .pubc{background:rgba(31,111,235,.1);border:1px solid var(--accent);border-radius:8px;padding:7px 10px;font-size:12.5px;text-align:center;margin-bottom:5px;font-weight:600;}
+  .conns{text-align:center;color:var(--muted);font-size:10.5px;margin:3px 0 7px;}
+  .cg{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+  .comp{background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:6px 9px;font-size:11.5px;}
+  .comp b{font-size:12px;} .comp.multi{border:1.5px solid var(--accent2);}
+  .comp .s{display:inline-block;font-size:9px;font-weight:700;padding:0 5px;border-radius:8px;background:var(--chip);color:var(--muted);margin-left:3px;}
+  /* 1-click flow (section 5) */
+  .flow5{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap;margin:16px 0;}
+  .flow5 .stg{flex:1;min-width:210px;border-radius:12px;padding:14px 15px;border:1px solid var(--line);background:var(--card);}
+  .flow5 .s1{border-top:4px solid var(--accent2);} .flow5 .s2{border-top:4px solid var(--accent);flex:1.5;} .flow5 .s3{border-top:4px solid var(--ok);}
+  .flow5 .lab{font-size:10px;font-weight:700;letter-spacing:.05em;color:var(--muted);}
+  .flow5 h4{margin:3px 0 6px;font-size:15px;}
+  .flow5 .chip{display:inline-block;font-size:11px;background:var(--chip);border-radius:20px;padding:2px 9px;margin-top:5px;}
+  .flow5 .arw{align-self:center;color:var(--muted);font-size:22px;font-weight:700;}
+  .flow5 ol{margin:6px 0 0;padding-left:16px;font-size:11.5px;color:var(--muted);}
+  .flow5 ol li{margin:2.5px 0;}
+  .flow5 .tsub{font-size:11px;color:var(--muted);margin-top:2px;}
+  .flow5 .url{font:12px ui-monospace,monospace;background:rgba(26,127,55,.12);color:var(--ok);border-radius:6px;padding:4px 8px;display:inline-block;margin-top:8px;font-weight:600;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;background:rgba(31,111,235,.14);color:var(--accent)">TECHNICAL ASSESSMENT</span>
+  <h1>Why DatArk onboarding is not a "single image", and why Kubernetes is the right fit</h1>
+  <p class="sub">Assessment of the "1-click, single-image, instantly available" expectation vs. the product's real component architecture. 2026-07-13.</p>
+</header>
+
+<div class="card tldr">
+  <b class="big">Executive summary</b>
+  <ul>
+    <li><b>"1-click" is delivered.</b> A client (or the marketplace) triggers <b>one action</b> and gets a running, isolated DatArk environment. That part is done.</li>
+    <li><b>But "1-click" ≠ "one Docker image".</b> DatArk is not one application — it is a <b>distributed system of 5+ interdependent services</b>, some of them <b>stateful and multi-node</b>. One image cannot represent it without breaking the product.</li>
+    <li>The single click <b>triggers an orchestration</b> (provision namespace → secrets → deploy 5 components → wire them → expose). The complexity is real; we <b>hid it behind the click</b>, not removed it.</li>
+    <li><b>Kubernetes is the most efficient fit</b> for this architecture — the product's requirements map almost 1:1 onto native Kubernetes primitives. Alternatives (single container / VMs / compose) each break a core requirement.</li>
+  </ul>
+</div>
+
+<h2>1. The expectation vs. the product</h2>
+<div class="card myth">
+  <p><b>The ask:</b> "Sell it on the marketplace — the client clicks once, we deploy a single image, and the product is instantly available."</p>
+  <p><b>The reality:</b> that mental model works for a <i>single stateless app</i> (one website, one API). DatArk is not that. It is a <b>backup / decentralized-storage platform</b> made of multiple cooperating services, several of which hold data and form a cluster. "One image" and "distributed storage cluster" are contradictory by definition.</p>
+</div>
+
+<div class="vs">
+  <div class="panel exp">
+    <span class="tg">EXPECTATION</span>
+    <h4>"One image, one click, deployed"</h4>
+    <div class="imgbox">
+      <div class="big2">📦 DatArk</div>
+      <div class="muted" style="font-size:11.5px">a single container image</div>
+      <div class="x">✗ can't hold a multi-node cluster,<br>persistent data, or per-tenant isolation</div>
+    </div>
+    <div class="arrowd">▼ deploy</div>
+    <p class="muted" style="text-align:center;font-size:12px;margin:2px 0">works for a single stateless app — <b>not</b> for DatArk</p>
+  </div>
+
+  <div class="panel real">
+    <span class="tg">REALITY</span>
+    <h4>A distributed, stateful, multi-tenant system</h4>
+    <div class="nsbox">
+      <div class="pubc">backend · API &nbsp;<span style="font-size:10px;color:var(--accent)">▲ PUBLIC (ingress + TLS)</span></div>
+      <div class="conns">backend connects to ▼ &nbsp;·&nbsp; + Vault (per-tenant secrets/encryption)</div>
+      <div class="cg">
+        <div class="comp multi"><b>kripfs</b> <span class="s">×1/3/5 · STATEFUL</span><br><span class="muted" style="font-size:10px">peered nodes, replicate</span></div>
+        <div class="comp"><b>postgres</b> <span class="s">STATEFUL</span><br><span class="muted" style="font-size:10px">persistent volume</span></div>
+        <div class="comp"><b>mongodb</b> <span class="s">STATEFUL</span><br><span class="muted" style="font-size:10px">persistent volume</span></div>
+        <div class="comp"><b>redis</b> <span class="s">STATEFUL</span><br><span class="muted" style="font-size:10px">cache / queue</span></div>
+      </div>
+      <div class="conns" style="margin-top:7px">+ NetworkPolicy · ResourceQuota · per-tenant Secret</div>
+    </div>
+    <p class="muted" style="text-align:center;font-size:12px;margin:8px 0 0">5+ services · several stateful · a storage <b>cluster</b> · isolated per client</p>
+  </div>
+</div>
+
+<h3>What DatArk actually is (per tenant)</h3>
+<table>
+  <tr><th>Component</th><th>Type</th><th>Why it can't collapse into one image</th></tr>
+  <tr><td><b>kripfs</b> (storage)</td><td>Stateful, <b>multi-node cluster</b></td><td>Pro/Enterprise run 3–5 <b>peered</b> nodes that replicate data to each other; each needs a <b>persistent identity</b> and its own disk. This is inherently many processes on many volumes — not one container.</td></tr>
+  <tr><td><b>backend</b> (API)</td><td>Stateless service</td><td>Its own release image + lifecycle; scales/restarts independently of storage.</td></tr>
+  <tr><td><b>postgres</b> (TimescaleDB)</td><td>Stateful database</td><td>Holds relational data that must survive restarts (persistent volume).</td></tr>
+  <tr><td><b>mongodb</b></td><td>Stateful database</td><td>Metadata store; persistent volume.</td></tr>
+  <tr><td><b>redis</b></td><td>Stateful cache/queue</td><td>Separate lifecycle; different scaling profile.</td></tr>
+  <tr><td><b>Vault</b> (shared)</td><td>Secrets + encryption</td><td>Per-tenant secrets, encryption keys, and app credentials — provisioned per client.</td></tr>
+</table>
+
+<h2>2. Why it can't be a single image (the hard reasons)</h2>
+<div class="card">
+  <ol>
+    <li><b>A container should run one process well.</b> Cramming backend + 3 databases + a storage cluster into one image is the classic "fat container" anti-pattern: they can't scale, restart, or fail independently — one crash takes down everything, and you lose the ability to run <b>multiple kripfs nodes</b> at all.</li>
+    <li><b>kripfs is a cluster, not a process.</b> The product's core value is <b>replication across nodes</b>. That requires 3–5 <b>separate, peered</b> nodes with stable identities and addresses. A single image fundamentally cannot provide multi-node replication — the feature you are selling.</li>
+    <li><b>State must persist.</b> kripfs blocks, mongo, and postgres data must survive restarts and rescheduling. A single throwaway container loses all data on restart. You need <b>persistent volumes</b> attached to specific components.</li>
+    <li><b>Every client must be isolated.</b> A marketplace means tenant A cannot see tenant B's data, secrets, or storage. That needs isolation boundaries (namespace, network policy, per-tenant secrets, quotas) — not achievable inside one shared image.</li>
+    <li><b>Components must find and authenticate to each other.</b> backend→kripfs (bearer token), backend→databases (passwords), backend→Vault (AppRole). This wiring must be <b>generated per tenant</b> from a secrets source. That is orchestration, not packaging.</li>
+  </ol>
+  <p class="muted"><b>The single image that <u>does</u> exist:</b> we built and published the <b>kripfs</b> image (<code>kipfs:v0.0.1</code>), and the backend image already existed. Those are the product's own images. The rest (redis/mongo/postgres) are standard database images. What the product needs on top is an <b>orchestrator</b> to place, connect, isolate, and scale them per client.</p>
+</div>
+
+<h2>3. Challenges if this were NOT on Kubernetes</h2>
+<p class="muted">The same product on VMs (the earlier PoC model), bare metal, or docker-compose runs into these — each maps to something Kubernetes gives for free:</p>
+<table>
+  <tr><th>Requirement</th><th>Without Kubernetes (VMs / compose / bare metal)</th></tr>
+  <tr><td>Per-tenant isolation</td><td>Provision <b>separate VMs per client</b> (minutes each, high cost) or hand-roll isolation. No cheap boundary like a namespace.</td></tr>
+  <tr><td>kripfs multi-node peering</td><td><b>Manually wire static peer lists</b>; adding a node means editing every node's config and restarting (the Ansible/VM approach). Error-prone at scale.</td></tr>
+  <tr><td>Self-healing</td><td>A crashed process <b>stays dead</b> — you must build systemd watchdogs / custom supervision per component.</td></tr>
+  <tr><td>Scaling a tier (1→3→5 nodes)</td><td>Provision new VMs, install, re-peer, re-balance — a manual multi-step operation per upgrade.</td></tr>
+  <tr><td>Persistent storage</td><td>Manually create/attach/track block volumes per component per tenant.</td></tr>
+  <tr><td>Secrets / TLS / networking</td><td>Wired by hand for every tenant; no per-tenant secret injection.</td></tr>
+  <tr><td>On-demand provisioning ("1-click")</td><td>The click must call <b>cloud APIs to build VMs</b> (minutes, quota, cost) instead of creating a namespace (seconds). Much slower, much more to fail.</td></tr>
+  <tr><td>Density / cost</td><td>VMs per tenant waste huge capacity; you cannot <b>pack many tenants</b> onto shared hardware.</td></tr>
+  <tr><td>Rollout / rollback</td><td>Manual, per-host, no atomic upgrade or one-command rollback.</td></tr>
+</table>
+<p class="muted"><b>docker-compose</b> specifically: fine for single-host dev, but no multi-host, no real per-tenant isolation, no self-healing, and a single point of failure — not viable for a multi-tenant marketplace product.</p>
+
+<h2>4. Assessment — is Kubernetes the most efficient way?</h2>
+<div class="card verdict">
+  <p class="big"><b class="ok">Verdict: Yes.</b> For a product with this component architecture — multiple stateful + stateless services, a multi-node storage cluster, per-client isolation, on-demand provisioning, and elastic scaling — <b>Kubernetes is the most efficient and appropriate platform.</b> The product's requirements map almost one-to-one onto native Kubernetes primitives, so we implement each requirement by <i>using</i> the platform rather than <i>building</i> it.</p>
+</div>
+<table>
+  <tr><th>Product requirement</th><th>Native Kubernetes primitive used</th></tr>
+  <tr><td>Multi-tenant isolation</td><td>Namespace + NetworkPolicy + ResourceQuota</td></tr>
+  <tr><td>Multi-node kripfs with stable identity + peering</td><td>StatefulSet + headless Service + per-pod PVC</td></tr>
+  <tr><td>Persistent data (kripfs / mongo / postgres)</td><td>PersistentVolumeClaim + dynamic StorageClass (Cinder)</td></tr>
+  <tr><td>Self-healing / restart</td><td>Deployment &amp; StatefulSet controllers</td></tr>
+  <tr><td>On-demand provisioning ("1-click")</td><td>Helm install into a new namespace (seconds) via API</td></tr>
+  <tr><td>Scale a tier up</td><td>Change the replica count (declarative)</td></tr>
+  <tr><td>Per-tenant secrets + encryption</td><td>Secret (from Vault) + Vault transit/AppRole</td></tr>
+  <tr><td>Public exposure + TLS</td><td>Ingress + LoadBalancer + wildcard cert</td></tr>
+  <tr><td>Cost / density</td><td>Bin-packing many tenants onto shared nodes</td></tr>
+</table>
+
+<h3>Honest trade-offs</h3>
+<ul>
+  <li><b>Kubernetes has a fixed setup cost</b> (the cluster, Vault, ingress, storage). But it is paid <b>once</b> and amortized across <b>every</b> tenant — build the platform once, then each new client is seconds and near-zero marginal effort.</li>
+  <li><b>If DatArk were a single stateless app</b>, a plain container on a PaaS (App Platform / Cloud Run) would be simpler and Kubernetes would be overkill. It is not that — it is a stateful, clustered, multi-tenant system, which is exactly Kubernetes' sweet spot.</li>
+  <li><b>Possible simplification (future):</b> some datastores could be <i>shared</i> with per-tenant databases (one postgres/mongo cluster, a DB per client) instead of one per tenant, to raise density. kripfs must stay per-tenant and multi-node — that is the product's core.</li>
+</ul>
+
+<h2>5. So how is it still "1-click"?</h2>
+<div class="card">
+  <p>We did not remove the complexity — we <b>put it behind a single trigger</b>. That is exactly how every SaaS marketplace product works: nobody ships a multi-service platform as one image; they ship an <b>orchestrated deployment</b> that a single click kicks off.</p>
+  <div class="flow5">
+    <div class="stg s1">
+      <div class="lab">STEP 1</div>
+      <h4>👆 One click</h4>
+      <div class="tsub">Marketplace “buy” button, or GitHub Actions “Run workflow”.</div>
+      <div class="chip">input: client name + tier</div>
+    </div>
+    <div class="arw">→</div>
+    <div class="stg s2">
+      <div class="lab">STEP 2 · automated · ~1–2 min</div>
+      <h4>⚙️ Orchestration</h4>
+      <div class="tsub">The single click kicks off the full deploy:</div>
+      <ol>
+        <li>create isolated namespace</li>
+        <li>generate per-tenant Vault secrets + keys</li>
+        <li>deploy kripfs (N) + backend + redis + mongo + postgres</li>
+        <li>wire credentials between components</li>
+        <li>expose via ingress + TLS</li>
+        <li>verify health</li>
+      </ol>
+    </div>
+    <div class="arw">→</div>
+    <div class="stg s3">
+      <div class="lab">STEP 3</div>
+      <h4>✅ Product available</h4>
+      <div class="tsub">Isolated, running, reachable.</div>
+      <div class="url">https://&lt;client&gt;.koneksi.co.kr</div>
+    </div>
+  </div>
+  <p class="muted">The client experiences one click. The system does the multi-component orchestration. Both statements are true — and that is the correct design for this product.</p>
+</div>
+
+<h2>6. Recommendation</h2>
+<div class="card verdict">
+  <ul>
+    <li><b>Keep Kubernetes.</b> It is the efficient, correct platform for DatArk's architecture; the alternatives break a core product requirement (isolation, multi-node storage, self-healing, or fast provisioning).</li>
+    <li><b>Frame "1-click" honestly to stakeholders:</b> one click to trigger, an orchestrated deploy underneath — <b>already delivered</b> (proven via the manual-trigger workflow).</li>
+    <li><b>Next efficiency levers</b> (optional): shared databases with per-tenant DBs to raise density; Vault HA; and connecting the marketplace "buy" event directly to the existing provisioning workflow.</li>
+  </ul>
+</div>
+
+<div class="foot" style="margin-top:36px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;">
+  DatArk onboarding — technical assessment · the product is a distributed multi-service system; "1-click" = one trigger over an orchestrated deploy; Kubernetes is the efficient fit for the architecture.
+</div>
+
+</div>
+</body>
+</html>

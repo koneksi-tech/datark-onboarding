@@ -93,7 +93,7 @@
 
 <!-- ============ COMPONENTS ============ -->
 <h2>2. Components — per-tenant stack deployment status</h2>
-<p class="muted">Validated by a live free-tier tenant (<code>test-client</code>) provisioned end-to-end on the real cluster + Vault.</p>
+<p class="muted">Validated across live tenants on the real cluster + Vault: <code>demo</code> (free), <code>acme</code> (pro, 3 kripfs), <code>initech</code> (enterprise, 5 kripfs), and <code>hundai</code> (provisioned via GitHub Actions).</p>
 <table>
   <tr><th>Component</th><th>Pod status</th><th>Verified</th></tr>
   <tr><td><b>backend</b></td><td><span class="b ok">DEPLOYED · 1/1</span></td><td>Pulls image (regcred); <code>/check-health</code> → <code>healthy:true</code>; <b>Vault AppRole login OK</b>; connects redis + mongo + postgres</td></tr>
@@ -211,7 +211,7 @@
 </div>
 
 <div class="foot">
-  DatArk Onboarding status · 2026-07-08 · datark-cluster (NKS) + datark Vault (125.6.39.130) · backend end-to-end verified with real staging credentials · kripfs image is the sole deployment blocker.
+  DatArk Onboarding status · 2026-07-13 · datark-cluster (NKS) + Vault (125.6.39.130) · all 5 components (incl. kripfs image kipfs:v0.0.1) running in pods; tenant reachable over valid TLS; upgrade-ready.
 </div>
 
 </div>

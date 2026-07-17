@@ -25,11 +25,20 @@
 {{/* Tenant public host */}}
 {{- define "datark.host" -}}{{ include "datark.id" . }}.{{ .Values.domain }}{{- end -}}
 
+{{/* Public kripfs cluster endpoint host — STANDARD: <id>-cluster.<domain> (needs a DNS A record) */}}
+{{- define "datark.cluster.host" -}}{{ include "datark.id" . }}-cluster.{{ .Values.domain }}{{- end -}}
+
+{{/* Effective kripfs announce address: explicit override, else the public cluster URL when exposed, else empty */}}
+{{- define "datark.kripfs.announce" -}}
+{{- if .Values.kripfs.announceAddr }}{{ .Values.kripfs.announceAddr }}{{- else if and .Values.kripfs.enabled .Values.kripfs.publicEndpoint }}{{ printf "https://%s" (include "datark.cluster.host" .) }}{{- end -}}
+{{- end -}}
+
 {{/* In-cluster service FQDNs (namespace = release namespace) */}}
 {{- define "datark.kripfs.svc"   -}}{{ include "datark.kripfs.name" . }}.{{ .Release.Namespace }}.svc.cluster.local{{- end -}}
 {{- define "datark.redis.svc"    -}}{{ include "datark.redis.name" . }}.{{ .Release.Namespace }}.svc.cluster.local{{- end -}}
 {{- define "datark.mongo.svc"    -}}{{ include "datark.mongo.name" . }}.{{ .Release.Namespace }}.svc.cluster.local{{- end -}}
 {{- define "datark.postgres.svc" -}}{{ include "datark.postgres.name" . }}.{{ .Release.Namespace }}.svc.cluster.local{{- end -}}
+{{- define "datark.backend.svc"  -}}{{ include "datark.backend.name" . }}.{{ .Release.Namespace }}.svc.cluster.local{{- end -}}
 
 {{/* Common labels */}}
 {{- define "datark.labels" -}}

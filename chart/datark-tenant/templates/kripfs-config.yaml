@@ -23,6 +23,20 @@ data:
       fi
       i=$((i + 1))
     done
+    # announce_addr: routable URL advertised in /cluster/peers (what the desktop
+    # dials). Empty ANNOUNCE_ADDR => null (fall back to 0.0.0.0, internal-only).
+    if [ -n "${ANNOUNCE_ADDR:-}" ]; then
+      ANNOUNCE_JSON="[\"${ANNOUNCE_ADDR}\"]"
+    else
+      ANNOUNCE_JSON="null"
+    fi
+    # koneksi_backend_url: backend for /auth/validate fallback (per-tenant JWTs).
+    # Empty => null (kipfs then relies solely on the Environment-header mapping).
+    if [ -n "${KONEKSI_BACKEND_URL:-}" ]; then
+      BACKEND_URL_JSON="\"${KONEKSI_BACKEND_URL}\""
+    else
+      BACKEND_URL_JSON="null"
+    fi
     mkdir -p "${REPO_ROOT}/state" "${REPO_ROOT}/keys" "${REPO_ROOT}/audit" "${REPO_ROOT}/blocks"
     # init runs as root; hand the data dir to the non-root kipfs user the daemon runs as
     chown -R kipfs:kipfs "${REPO_ROOT}" 2>/dev/null || true
@@ -32,7 +46,7 @@ data:
       "swarm_port": ${SWARM_PORT},
       "api_port": ${API_PORT},
       "listen_addr": null,
-      "announce_addr": null,
+      "announce_addr": ${ANNOUNCE_JSON},
       "repo_root": "${REPO_ROOT}",
       "cluster_mode": "cluster",
       "cluster_peers": [ ${PEERS} ],
@@ -45,6 +59,7 @@ data:
       "node_name": "${HOSTNAME}",
       "koneksi_auth_enabled": true,
       "koneksi_static_bearer": "${KIPFS_STATIC_BEARER}",
+      "koneksi_backend_url": ${BACKEND_URL_JSON},
       "log_level": "${LOG_LEVEL}",
       "log_format": "text",
       "dht_mode": "auto",

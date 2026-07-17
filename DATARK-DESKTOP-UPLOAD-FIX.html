@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DatArk — Desktop Upload Fix (demo K8s) · Issue &amp; Solution</title>
+<style>
+  :root{--bg:#f6f8fa;--card:#fff;--ink:#1f2328;--muted:#57606a;--line:#d0d7de;--accent:#1f6feb;--accent2:#8250df;--ok:#1a7f37;--warn:#9a6700;--err:#cf222e;--chip:#eaeef2;--code:#f0f3f6;}
+  @media (prefers-color-scheme:dark){:root{--bg:#0d1117;--card:#161b22;--ink:#e6edf3;--muted:#8b949e;--line:#30363d;--accent:#58a6ff;--accent2:#bc8cff;--ok:#3fb950;--warn:#d29922;--err:#f85149;--chip:#21262d;--code:#0b0f14;}}
+  :root[data-theme="dark"]{--bg:#0d1117;--card:#161b22;--ink:#e6edf3;--muted:#8b949e;--line:#30363d;--accent:#58a6ff;--accent2:#bc8cff;--ok:#3fb950;--warn:#d29922;--err:#f85149;--chip:#21262d;--code:#0b0f14;}
+  :root[data-theme="light"]{--bg:#f6f8fa;--card:#fff;--ink:#1f2328;--muted:#57606a;--line:#d0d7de;--accent:#1f6feb;--accent2:#8250df;--ok:#1a7f37;--warn:#9a6700;--err:#cf222e;--chip:#eaeef2;--code:#f0f3f6;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:1040px;margin:0 auto;padding:34px 20px 90px;}
+  h1{font-size:24px;margin:0 0 4px;} h2{font-size:19px;margin:34px 0 8px;border-bottom:1px solid var(--line);padding-bottom:5px;} h3{font-size:15.5px;margin:20px 0 4px;}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 6px;}
+  code{background:var(--code);padding:1px 5px;border-radius:5px;font:12px ui-monospace,Menlo,monospace;word-break:break-word;}
+  .muted{color:var(--muted);}
+  .card{border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0;background:var(--card);}
+  .card.good{border-left:5px solid var(--ok);} .card.bad{border-left:5px solid var(--err);} .card.warn{border-left:5px solid var(--warn);} .card.info{border-left:5px solid var(--accent);}
+  .tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;letter-spacing:.02em;}
+  .tg-ok{background:rgba(26,127,55,.16);color:var(--ok);} .tg-bad{background:rgba(207,34,46,.16);color:var(--err);} .tg-warn{background:rgba(154,103,0,.16);color:var(--warn);} .tg-info{background:rgba(31,111,235,.14);color:var(--accent);}
+  table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13px;display:block;overflow-x:auto;}
+  th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top;} th{background:var(--chip);font-size:12.5px;}
+  .note{border-left:4px solid var(--accent);background:rgba(31,111,235,.06);border-radius:0 8px 8px 0;padding:10px 14px;margin:12px 0;font-size:13.3px;}
+  .note.warn{border-left-color:var(--warn);background:rgba(154,103,0,.06);}
+  .note.good{border-left-color:var(--ok);background:rgba(26,127,55,.06);}
+  .note.bad{border-left-color:var(--err);background:rgba(207,34,46,.06);}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:9px;padding:12px 14px;overflow-x:auto;font:12px ui-monospace,Menlo,monospace;margin:10px 0;}
+  .flowrow{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;margin:12px 0;}
+  .node{flex:1;min-width:120px;border:1.5px solid var(--line);border-radius:11px;padding:11px;text-align:center;background:var(--bg);}
+  .node b{display:block;font-size:13px;} .node span{font:10.5px ui-monospace,monospace;color:var(--muted);}
+  .node.client{border-color:var(--accent);} .node.backend{border-color:var(--accent2);} .node.kipfs{border-color:var(--warn);}
+  .arrow{display:flex;flex-direction:column;justify-content:center;align-items:center;min-width:118px;color:var(--muted);font:10.5px/1.35 ui-monospace,monospace;text-align:center;padding:0 2px;}
+  .arrow .a{font-size:19px;line-height:1;color:var(--accent);} .arrow.bad .a{color:var(--err);} .arrow.good .a{color:var(--ok);}
+  ol.steps,ul.tight{margin:8px 0;padding-left:20px;} ol.steps li,ul.tight li{margin:4px 0;}
+  .kv{display:grid;grid-template-columns:170px 1fr;gap:2px 14px;font-size:13px;margin:8px 0;}
+  .kv div:nth-child(odd){color:var(--muted);}
+  .pill{font:11px ui-monospace,monospace;padding:1px 7px;border-radius:20px;background:var(--chip);}
+  .ba{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0;}
+  @media(max-width:680px){.ba{grid-template-columns:1fr}.kv{grid-template-columns:1fr}}
+  .foot{margin-top:38px;padding-top:12px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;}
+  .toc{font-size:13px;columns:2;column-gap:26px;} .toc a{color:var(--accent);text-decoration:none;} .toc a:hover{text-decoration:underline;}
+  @media(max-width:680px){.toc{columns:1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>DatArk — Desktop Upload Fix</h1>
+<p class="sub">Demo tenant (Kubernetes / <code>datark-cluster</code>) · namespace <code>tenant-demo</code> · 2026‑07‑17</p>
+<p class="sub"><span class="tag tg-bad">WAS</span> desktop upload failed with “network error” &nbsp;→&nbsp; <span class="tag tg-ok">NOW</span> request path returns <code>200 + CID</code>. <b>Fix = configuration &amp; mapping only</b> — no new kripfs image, no new backend image, no desktop rebuild.</p>
+<p class="sub"><span class="tag tg-info">STANDARDIZED</span> These configs are now baked into the Helm chart (<code>chart/datark-tenant</code>) — every future tenant is exposed at <code>&lt;id&gt;-cluster.koneksi.co.kr</code> automatically. See <a href="#standard" style="color:var(--accent)">§9</a>.</p>
+
+<div class="card info">
+<div class="toc">
+  <a href="#symptom">1 · Symptom</a><br>
+  <a href="#flow">2 · How upload actually works</a><br>
+  <a href="#ruledout">3 · What we ruled out (wrong theories)</a><br>
+  <a href="#root">4 · Real root cause (the 401)</a><br>
+  <a href="#solution">5 · The solution (5 changes)</a><br>
+  <a href="#verify">6 · Verification</a><br>
+  <a href="#noimage">7 · Why no image rebuild</a><br>
+  <a href="#standard">8 · Now the onboarding standard</a><br>
+  <a href="#todo">9 · Remaining / caveats</a>
+</div>
+</div>
+
+<!-- 1 -->
+<h2 id="symptom">1 · Symptom</h2>
+<div class="card bad">
+  <b>Desktop app <code>DatArkPOC/1.2.5</code> (Electron):</b> login succeeds, but every file upload fails with <b>“network error.”</b>
+  The <b>web UI</b> uploads to the same backend fine. So it was <i>specific to the desktop upload path</i>, not auth or the backend in general.
+</div>
+
+<!-- 2 -->
+<h2 id="flow">2 · How the desktop upload actually works</h2>
+<p class="sub">Unlike the web UI (which streams bytes <i>through</i> the backend), the desktop uses a <b>direct-to-storage</b> path. The backend only brokers the handshake; the file bytes go <b>straight from the app to the kipfs cluster</b>.</p>
+
+<div class="flowrow">
+  <div class="node client"><b>👤 Desktop</b><span>engine (Go)<br>localhost:3080</span></div>
+  <div class="arrow"><div class="a">──►</div><div>1&nbsp;POST /files/upload/init<br><b>200</b></div></div>
+  <div class="node backend"><b>🌐 demo backend</b><span>demo.koneksi.co.kr</span></div>
+  <div class="arrow good"><div class="a">◄──</div><div>returns:<br><code>upload_url</code><br><code>upload_authorization</code></div></div>
+  <div class="node client"><b>👤 Desktop</b><span>has upload_url</span></div>
+</div>
+<div class="flowrow">
+  <div class="node client"><b>👤 Desktop</b><span>file bytes</span></div>
+  <div class="arrow bad"><div class="a">──►</div><div>2&nbsp;POST <b>/cluster/add</b><br>Authorization: user JWT<br>Environment: <code>local</code></div></div>
+  <div class="node kipfs"><b>🗄️ kipfs</b><span>demo-poc-cluster<br>.koneksi.co.kr</span></div>
+  <div class="arrow bad"><div class="a">▶?</div><div>3&nbsp;validates JWT via<br><b>/auth/validate</b></div></div>
+  <div class="node backend"><b>🌐 which backend?</b><span>← the bug lived here</span></div>
+</div>
+
+<div class="note"><b>Key facts (from source):</b>
+<ul class="tight">
+  <li>Backend builds <code>upload_url = IPFS_NODE_URL + "/cluster/add"</code> and hands back the <b>user’s own JWT</b> as <code>upload_authorization</code> (<code>init_upload_controller.go:222</code>).</li>
+  <li>The desktop then POSTs the bytes <b>directly</b> to that <code>upload_url</code> on kipfs — this never touches the backend, which is why the backend logs showed <code>init</code> 200 but no “complete”.</li>
+  <li>kipfs receives a token that is <b>not</b> its static bearer, so it must <b>call back to a Koneksi backend</b> at <code>POST /auth/validate</code> to check it.</li>
+</ul>
+</div>
+
+<!-- 3 -->
+<h2 id="ruledout">3 · What we ruled out (the wrong theories)</h2>
+<table>
+  <tr><th>Theory</th><th>Verdict</th><th>Evidence</th></tr>
+  <tr><td>p2p swarm <code>:4001</code> announces <code>0.0.0.0</code> → app can’t dial it</td><td><span class="tag tg-bad">WRONG</span></td><td>The <b>working prod</b> kipfs <i>also</i> advertises <code>/ip4/0.0.0.0/tcp/4001</code>. kipfs transfers over <b>HTTP :8080</b>, not libp2p :4001. The “swarm” is a red herring.</td></tr>
+  <tr><td>Incomplete TLS chain (Go client is stricter than <code>curl -k</code>)</td><td><span class="tag tg-bad">WRONG</span></td><td>Endpoint serves the <b>full chain</b> (leaf + GlobalSign intermediate); strict validation with no <code>-k</code> returns <code>200</code>. Identical to the working backend host.</td></tr>
+  <tr><td>Need a new kripfs / backend image</td><td><span class="tag tg-bad">WRONG</span></td><td>Every lever needed (<code>announce_addr</code>, <code>koneksi_backend_url</code>, <code>IPFS_NODE_URL</code>) is a <b>config value the existing binaries already read</b>.</td></tr>
+</table>
+
+<!-- 4 -->
+<h2 id="root">4 · Real root cause — the 401</h2>
+<p class="sub">The ingress-nginx access log showed the desktop <b>did</b> reach kipfs and POST <code>/cluster/add</code> — and got <b>401 “Koneksi auth failed.”</b></p>
+<pre>192.168.0.62  "POST /cluster/add HTTP/2.0" <b style="color:var(--err)">401</b> ... "DatArkPOC/1.2.5 ... Electron/35.7.5"</pre>
+
+<div class="card bad">
+<h3 style="margin-top:0">Why kipfs said 401</h3>
+<p>kipfs validates a non-static token by calling <code>POST {backend}/auth/validate</code>. Which backend it uses has a fixed precedence (<code>kipfs-net/src/koneksi_auth.rs</code>):</p>
+<ol class="steps">
+  <li><b>The <code>Environment</code> request header wins</b> — <code>production→api.koneksi.co.kr</code>, <code>uat→uat…</code>, <code>staging→staging…</code>.</li>
+  <li>Only if that header is <b>absent or unrecognized</b> does it fall back to the configured <code>koneksi_backend_url</code>.</li>
+  <li>If neither yields a URL → <b>fail-closed → 401</b>.</li>
+</ol>
+<p>The demo kipfs had <b>no <code>koneksi_backend_url</code> set</b>. The desktop sends <code>Environment: local</code> (see below), which kipfs doesn’t recognize → no env URL → <b>no fallback URL</b> → <b>fail-closed 401</b>. The demo user’s JWT was never even checked against the demo backend.</p>
+</div>
+
+<div class="note"><b>Why the desktop sends <code>Environment: local</code>:</b> the desktop bundles the <b>latest <i>released</i></b> koneksi-engine (<code>download-engine.ts</code> pulls <code>releases/latest</code>). In that engine, <code>DetectEnvironment("demo.koneksi.co.kr")</code> matches none of <code>uat/staging/api</code> → hits the <code>default</code> → returns <b><code>local</code></b>. (The <code>feat/detect-poc-domains</code> engine change is not released, so it isn’t in the build.)</div>
+
+<!-- 5 -->
+<h2 id="solution">5 · The solution — 5 config changes (no images)</h2>
+<table>
+  <tr><th>#</th><th>Change</th><th>Object</th><th>Purpose</th></tr>
+  <tr><td>1</td><td>Create <b>Ingress</b> <code>demo-kripfs-public</code> → <code>demo-poc-cluster.koneksi.co.kr</code> → <code>demo-kripfs:8080</code>, TLS <code>datark-wildcard-tls</code></td><td>tenant-demo</td><td>Expose the kipfs HTTP gateway publicly so the desktop can reach it.</td></tr>
+  <tr><td>2</td><td><b>NetworkPolicy</b> <code>demo-default-deny</code> — add port <b>8080</b> to the ingress-nginx allow rule</td><td>tenant-demo</td><td>The default-deny only opened <b>3000 (backend)</b>; kipfs :8080 was dropped (<code>upstream timed out</code>). This let the ingress reach kipfs.</td></tr>
+  <tr><td>3</td><td>Backend <code>IPFS_NODE_URL</code> &amp; <code>IPFS_DOWNLOAD_URL</code> → <code>https://demo-poc-cluster.koneksi.co.kr</code></td><td><code>demo-backend-config</code></td><td>So <code>upload_url</code> the backend hands the desktop points at the public endpoint.</td></tr>
+  <tr><td>4</td><td>kipfs <b><code>announce_addr</code></b> → <code>["https://demo-poc-cluster.koneksi.co.kr"]</code></td><td>kipfs <code>config.json</code></td><td><code>/cluster/peers</code> (get-swarm-address) now advertises a <b>routable</b> address instead of <code>0.0.0.0</code>.</td></tr>
+  <tr><td><b>5</b></td><td>kipfs <b><code>koneksi_backend_url</code></b> → <code>http://demo-backend.tenant-demo.svc.cluster.local</code></td><td>kipfs <code>config.json</code></td><td><b>THE fix for the 401.</b> Gives kipfs a fallback backend to validate demo JWTs against — the demo backend itself — when <code>Environment: local</code> is sent.</td></tr>
+</table>
+<p class="sub">#5 is the one that unblocked upload. #1–#3 are plumbing to route the request; #4 fixes get-swarm-address / allocations.</p>
+
+<h3>The auth decision, before vs after change #5</h3>
+<div class="ba">
+  <div class="card bad"><span class="tag tg-bad">BEFORE</span>
+    <div class="kv" style="margin-top:8px">
+      <div>Env header</div><div><code>local</code> → unrecognized</div>
+      <div>koneksi_backend_url</div><div><i>unset</i></div>
+      <div>Fallback URL</div><div>none → fail-closed</div>
+      <div>Result</div><div><b style="color:var(--err)">401 Koneksi auth failed</b></div>
+    </div>
+  </div>
+  <div class="card good"><span class="tag tg-ok">AFTER</span>
+    <div class="kv" style="margin-top:8px">
+      <div>Env header</div><div><code>local</code> → unrecognized</div>
+      <div>koneksi_backend_url</div><div><code>demo-backend…svc</code></div>
+      <div>Fallback URL</div><div>demo backend <code>/auth/validate</code></div>
+      <div>Result</div><div><b style="color:var(--ok)">200 + CID</b></div>
+    </div>
+  </div>
+</div>
+
+<!-- 6 -->
+<h2 id="verify">6 · Verification</h2>
+<p class="sub">Reproduced the exact request the released desktop sends (user JWT + <code>Environment: local</code>) against the public endpoint:</p>
+<pre># BEFORE fix #5
+POST /cluster/add  (Bearer &lt;demo user JWT&gt;, Environment: local)
+  → <b style="color:var(--err)">401</b> {"error":"unauthorized: Koneksi auth failed"}
+
+# AFTER fix #5
+POST /cluster/add  (Bearer &lt;demo user JWT&gt;, Environment: local)
+  → <b style="color:var(--ok)">200</b> {"name":"el.txt","cid":"QmXPts48hyNGQGWNSRXRrDEywNvfAPzXNtQKjXfH7eFi8h", ...}</pre>
+<table>
+  <tr><th>Check</th><th>Result</th></tr>
+  <tr><td>Public endpoint <code>/health</code> (real DNS, strict TLS)</td><td><span class="tag tg-ok">200</span></td></tr>
+  <tr><td><code>/cluster/peers</code> advertises routable URL (not 0.0.0.0)</td><td><span class="tag tg-ok">200</span> <code>https://demo-poc-cluster…/p2p/…</code></td></tr>
+  <tr><td>Backend upload → CID, read back through gateway</td><td><span class="tag tg-ok">byte-for-byte match</span></td></tr>
+  <tr><td>Desktop request: user JWT + <code>Environment: local</code> → <code>/cluster/add</code></td><td><span class="tag tg-ok">200 + CID</span></td></tr>
+</table>
+
+<!-- 7 -->
+<h2 id="noimage">7 · Why no image rebuild was needed</h2>
+<ul class="tight">
+  <li><b>kipfs:</b> <code>announce_addr</code> and <code>koneksi_backend_url</code> are config fields the running binary already reads at startup (regenerated by the init container, applied on pod restart).</li>
+  <li><b>backend:</b> already constructs <code>upload_url</code> from <code>IPFS_NODE_URL</code> — only the env value changed.</li>
+  <li><b>desktop:</b> its <code>Environment: local</code> is exactly the value that triggers the <code>koneksi_backend_url</code> fallback — no engine/app change required.</li>
+</ul>
+
+<!-- 8 -->
+<h2 id="todo">8 · Remaining items &amp; caveats</h2>
+<div class="note warn"><b>a) Persist in the Helm chart.</b> <code>announce_addr</code> is already wired into the chart (value <code>kripfs.announceAddr</code>, default <code>""</code>→<code>null</code>). <code>koneksi_backend_url</code> (#5) is currently <b>live-patched only</b> — it should be folded into the chart the same way so future tenants get it automatically and a <code>helm upgrade</code> doesn’t wipe it.</div>
+<div class="note warn"><b>b) Large files → 502.</b> One earlier attempt (a <b>64&nbsp;MB</b> file) got <code>Connection reset by peer</code> from kipfs. Small files are confirmed green; if large files still 502, that’s a separate kipfs body-size / timeout tune, <b>not</b> an auth issue.</div>
+<div class="note bad"><b>c) Do NOT let the engine send <code>Environment: production</code> for tenants.</b> The whole fix relies on the header being <b>unrecognized</b> (so kipfs uses <code>koneksi_backend_url</code>). If <code>feat/detect-poc-domains</code> (PR&nbsp;#145) ships and maps a tenant to <code>production/uat/staging</code>, kipfs routes back to the shared prod backend → 401 again. DatArk tenants must send a non-(production/uat/staging) value.</div>
+<div class="note good"><b>Bottom line:</b> the current desktop build works against the demo tenant with the server-side config in place. Recommended next: (1) fold #5 into the chart, (2) confirm large-file behavior, (3) reconcile PR&nbsp;#145 with caveat (c).</div>
+
+<div class="foot">DatArk PoC · Desktop upload fix on the Kubernetes demo tenant (<code>tenant-demo</code>) · 2026‑07‑17.
+Endpoint <code>demo-poc-cluster.koneksi.co.kr → 133.186.214.160</code>. Related: <code>DATARK-ONBOARDING.html</code>, <code>poc-upload-flow.html</code>.
+Note: this is the <b>K8s</b> environment; the VM PoC (<code>api-poc.koneksi.co.kr</code>) has public kipfs floating IPs and does not need changes #1/#2.</div>
+
+</div>
+</body>
+</html>

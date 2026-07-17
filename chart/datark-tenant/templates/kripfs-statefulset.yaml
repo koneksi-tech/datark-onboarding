@@ -51,6 +51,13 @@ spec:
               value: {{ .Values.kripfs.gatewayPort | quote }}
             - name: SWARM_PORT
               value: {{ .Values.kripfs.swarmPort | quote }}
+            - name: ANNOUNCE_ADDR
+              value: {{ include "datark.kripfs.announce" . | quote }}
+            # Backend used to validate non-static bearers (POST /auth/validate).
+            # Points at THIS tenant's backend so per-tenant JWTs validate locally
+            # (kipfs only falls back here when the Environment header is unrecognized).
+            - name: KONEKSI_BACKEND_URL
+              value: {{ printf "http://%s" (include "datark.backend.svc" .) | quote }}
             - name: API_PORT
               value: {{ .Values.kripfs.apiPort | quote }}
             - name: REPO_ROOT

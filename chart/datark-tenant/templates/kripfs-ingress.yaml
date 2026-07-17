@@ -1,0 +1,36 @@
+{{- if and .Values.kripfs.enabled .Values.kripfs.publicEndpoint }}
+# Public kripfs cluster endpoint — STANDARD host: <id>-cluster.<domain>.
+# Fronts the kripfs HTTP gateway (:{{ .Values.kripfs.gatewayPort }}) so the DatArk
+# Agent/desktop can reach /cluster/add for direct uploads. Requires a DNS A record
+# for {{ include "datark.cluster.host" . }} -> the ingress-nginx LB, and the
+# demo-default-deny NetworkPolicy opening {{ .Values.kripfs.gatewayPort }} to ingress-nginx.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "datark.kripfs.name" . }}-public
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "datark.labels" . | nindent 4 }}
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+spec:
+  ingressClassName: {{ .Values.ingress.className | quote }}
+  tls:
+    - hosts:
+        - {{ include "datark.cluster.host" . | quote }}
+      secretName: {{ .Values.ingress.tlsSecretName | quote }}
+  rules:
+    - host: {{ include "datark.cluster.host" . | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "datark.kripfs.name" . }}
+                port:
+                  number: {{ .Values.kripfs.gatewayPort }}
+{{- end }}

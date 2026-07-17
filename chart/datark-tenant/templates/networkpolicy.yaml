@@ -14,11 +14,16 @@ spec:
     # traffic from pods in this same namespace
     - from:
         - podSelector: {}
-    # the ingress-nginx controller reaching the backend (adjust label to your install)
+    # the ingress-nginx controller reaching the backend + the public kripfs gateway
+    # (adjust label to your install). The kripfs gateway port is opened so a public
+    # Ingress (e.g. <id>-poc-cluster.koneksi.co.kr) can front the storage cluster.
     - from:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: ingress-nginx
       ports:
         - { protocol: TCP, port: {{ .Values.backend.port }} }
+        {{- if .Values.kripfs.enabled }}
+        - { protocol: TCP, port: {{ .Values.kripfs.gatewayPort }} }
+        {{- end }}
 {{- end }}

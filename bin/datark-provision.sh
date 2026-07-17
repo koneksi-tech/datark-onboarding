@@ -188,12 +188,22 @@ seed_admin "$TENANT" || warn "admin seed skipped — re-run provisioning to seed
 
 echo
 ok "TENANT PROVISIONED"
+# Two DNS A records are required (both -> the ingress-nginx LB IP):
+#   <tenant>.<domain>          — backend API
+#   <tenant>-cluster.<domain>  — kripfs cluster endpoint (Agent/desktop uploads)
+LB_IP="$(kc -n ingress-nginx get svc ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)"
+warn "DNS: add A records -> ${LB_IP:-<ingress-nginx LB IP>}"
+echo "       ${TENANT}.${DOMAIN}"
+echo "       ${TENANT}-cluster.${DOMAIN}   (kripfs cluster endpoint — required for Agent/desktop upload)"
 cat <<EOF
 {
   "tenant": "$TENANT",
   "tier": "$TIER",
   "namespace": "$NS",
   "url": "https://${TENANT}.${DOMAIN}",
+  "cluster_endpoint": "https://${TENANT}-cluster.${DOMAIN}",
+  "dns_a_records": ["${TENANT}.${DOMAIN}", "${TENANT}-cluster.${DOMAIN}"],
+  "dns_target_lb": "${LB_IP:-<ingress-nginx LB IP>}",
   "admin_email": "$(vault_kv_field "$TENANT" admin_email 2>/dev/null || true)",
   "admin_password_ref": "${VAULT_KV_MOUNT}/datark/tenants/${TENANT} (key: admin_password)",
   "vault_kv": "${VAULT_KV_MOUNT}/datark/tenants/${TENANT}",
