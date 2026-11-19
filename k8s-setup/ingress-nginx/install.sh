@@ -11,10 +11,15 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 echo "[ingress-nginx] target context: $DATARK_CONTEXT"
 kubectl --context "$DATARK_CONTEXT" cluster-info >/dev/null || { echo "context not reachable"; exit 1; }
 
+# Chart pinned (no floating "latest"). 4.15.1 is the final community release (controller v1.15.1).
+# Check what is deployed first: helm --kube-context "$DATARK_CONTEXT" -n ingress-nginx list
+: "${INGRESS_NGINX_CHART_VERSION:=4.15.1}"
+
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx >/dev/null 2>&1 || true
 helm repo update ingress-nginx >/dev/null
 
 helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
+  --version "$INGRESS_NGINX_CHART_VERSION" \
   --kube-context "$DATARK_CONTEXT" \
   --namespace ingress-nginx --create-namespace \
   -f "$DIR/values.yaml" \
